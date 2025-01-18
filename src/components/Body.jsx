@@ -32,9 +32,9 @@ const Body = () => {
   }, []);
 
   return (
-    <div className="bg-gray-900">
+    <div className="min-h-screen flex flex-col bg-gray-950">
       <Navbar />
-      <div className="main-content">
+      <div className="flex-grow main-content">
         <Outlet />
       </div>
       <Footer />

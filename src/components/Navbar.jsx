@@ -33,7 +33,7 @@ const Navbar = () => {
   const user = useSelector((store) => store.user);
   return (
     <>
-      <div className="navbar bg-base-300">
+      <div className="navbar bg-black">
         <div className="flex-1">
           <Link to={"/"} className="btn btn-ghost text-xl mx-7">
             Dev Mate 🚀
@@ -43,7 +43,9 @@ const Navbar = () => {
           {user && (
             <div className="dropdown dropdown-end mx-7">
               <div className="flex space-x-5 items-center justify-center">
-                <p className="text-xl text-info">Welcome, {user.firstName}</p>
+                <p className="text-xl text-indigo-500 ">
+                  Welcome, {user.firstName}
+                </p>
                 <div
                   tabIndex={0}
                   role="button"
@@ -61,7 +63,6 @@ const Navbar = () => {
                 <li>
                   <Link to={"/profile"} className="justify-between">
                     Profile
-                    <span className="badge">New</span>
                   </Link>
                 </li>
                 <li>
@@ -69,6 +70,9 @@ const Navbar = () => {
                 </li>
                 <li>
                   <Link to={"/requests"}>Pending Requests</Link>
+                </li>
+                <li>
+                  <Link to={"/premium"}>Upgrade</Link>
                 </li>
                 <li>
                   <button onClick={handleLogout}>Logout</button>
