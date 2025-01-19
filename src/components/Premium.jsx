@@ -1,45 +1,62 @@
-import React from "react";
-import {
-  Crown,
-  Users,
-  Check,
-  X,
-  Clock,
-  Instagram,
-  MessageCircleIcon,
-} from "lucide-react";
+import React, { useEffect } from "react";
+import { Crown, Users, Check, X, Clock, MessageCircleIcon } from "lucide-react";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 
 const Premium = () => {
-  const handleMembership = async (membershipType) => {
-    const order = await axios.post(
-      `${BASE_URL}/payment/create-order`,
-      { membershipType: membershipType },
-      { withCredentials: true }
-    );
+  useEffect(() => {
+    // Dynamically load Razorpay script
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
 
-    const { amount, currency, keyId, orderId, notes } = order.data;
-
-    const options = {
-      key: rzp_test_cJzPpPnLBEuYEy, // Replace with your Razorpay key_id
-      amount: amount, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
-      currency: currency,
-      name: "DevMate",
-      description: "Connect to like-minded developers",
-      order_id: orderId, // This is the order_id created in the backend
-      prefill: {
-        name: `${notes?.firstName} ${notes?.lastName}`,
-        email: notes?.emailId,
-        contact: "9999999999",
-      },
-      theme: {
-        color: membershipType === "diamond" ? "#6366F1" : "#10B981",
-      },
+    script.onload = () => {
+      console.log("Razorpay script loaded successfully.");
     };
 
-    const rzp = new window.Razorpay(options);
-    rzp.open();
+    script.onerror = () => {
+      console.error("Failed to load Razorpay script.");
+    };
+  }, []);
+
+  const handleMembership = async (membershipType) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/payment/create-order`,
+        { membershipType },
+        { withCredentials: true }
+      );
+
+      const { amount, currency, keyId, orderId, notes } = response.data;
+
+      // Ensure Razorpay is loaded
+      if (typeof window.Razorpay !== "undefined") {
+        const options = {
+          key: keyId,
+          amount,
+          currency,
+          name: "DevMate",
+          description: "Connect to like-minded developers",
+          order_id: orderId,
+          prefill: {
+            name: `${notes?.firstName} ${notes?.lastName}`,
+            email: notes?.emailId,
+            contact: "9999999999", // You may replace this with dynamic contact
+          },
+          theme: {
+            color: membershipType === "diamond" ? "#6366F1" : "#10B981",
+          },
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        console.error("Razorpay SDK not loaded.");
+      }
+    } catch (error) {
+      console.error("Error during membership handling:", error);
+    }
   };
 
   return (
@@ -91,7 +108,7 @@ const Premium = () => {
             <button
               className="w-full py-3 px-6 rounded-lg bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors duration-200"
               onClick={() => handleMembership("emerald")}
-              type="click"
+              type="button"
             >
               Buy Emerald
             </button>
