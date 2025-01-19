@@ -8,8 +8,41 @@ import {
   Instagram,
   MessageCircleIcon,
 } from "lucide-react";
+import axios from "axios";
+import { BASE_URL } from "../utils/constants";
 
 const Premium = () => {
+  const handleMembership = async (membershipType) => {
+    const order = await axios.post(
+      `${BASE_URL}/payment/create-order`,
+      { membershipType: membershipType },
+      { withCredentials: true }
+    );
+
+    const { amount, currency, keyId, orderId, notes } = order.data;
+
+    const options = {
+      key: keyId, // Replace with your Razorpay key_id
+      amount: amount, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+      currency: currency,
+      name: "DevMate",
+      description: "Connect to like-minded developers",
+      order_id: orderId, // This is the order_id created in the backend
+      callback_url: "http://localhost:5173/premium", // Your success URL
+      prefill: {
+        name: `${notes?.firstName} ${notes?.lastName}`,
+        email: notes?.emailId,
+        contact: "9999999999",
+      },
+      theme: {
+        color: membershipType === "diamond" ? "#6366F1" : "#10B981",
+      },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-300 to-gray-400 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
@@ -51,8 +84,16 @@ const Premium = () => {
                 <X className="h-5 w-5 text-red-500 mr-3" />
                 <span className="text-gray-700">Premium badge</span>
               </div>
+              <div className="flex items-center">
+                <X className="h-5 w-5 text-red-500 mr-3" />
+                <span className="text-gray-700">Priority support</span>
+              </div>
             </div>
-            <button className="w-full py-3 px-6 rounded-lg bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors duration-200">
+            <button
+              className="w-full py-3 px-6 rounded-lg bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors duration-200"
+              onClick={() => handleMembership("emerald")}
+              type="click"
+            >
               Buy Emerald
             </button>
           </div>
@@ -95,7 +136,10 @@ const Premium = () => {
                 <span className="text-gray-700">6 months Validity</span>
               </div>
             </div>
-            <button className="w-full py-3 px-6 rounded-lg bg-indigo-500 text-white font-medium hover:bg-indigo-600 transition-colors duration-200 flex items-center justify-center">
+            <button
+              className="w-full py-3 px-6 rounded-lg bg-indigo-500 text-white font-medium hover:bg-indigo-600 transition-colors duration-200 flex items-center justify-center"
+              onClick={() => handleMembership("diamond")}
+            >
               <Crown className="h-5 w-5 mr-2" />
               Buy Diamond
             </button>
