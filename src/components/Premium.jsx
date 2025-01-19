@@ -11,11 +11,12 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Premium = () => {
   const [isUserPremium, setIsUserPremium] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     verifyPremiumUser();
@@ -114,9 +115,9 @@ const Premium = () => {
                 <PartyPopper className="w-10 h-10 text-yellow-500 animate-[bounce_2s_infinite_0.4s]" />
               </div>
               <Link to="/">
-                <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                <button className="text-3xl font-bold text-gray-800 mb-4">
                   You're Already Premium! 🎉
-                </h2>
+                </button>
               </Link>
               <div className="relative">
                 <p className="text-gray-600 mb-6">
