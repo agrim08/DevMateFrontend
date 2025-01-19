@@ -22,7 +22,7 @@ const Premium = () => {
     const { amount, currency, keyId, orderId, notes } = order.data;
 
     const options = {
-      key: keyId, // Replace with your Razorpay key_id
+      key: rzp_test_cJzPpPnLBEuYEy, // Replace with your Razorpay key_id
       amount: amount, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
       currency: currency,
       name: "DevMate",
