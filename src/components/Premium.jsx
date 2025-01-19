@@ -28,7 +28,6 @@ const Premium = () => {
       name: "DevMate",
       description: "Connect to like-minded developers",
       order_id: orderId, // This is the order_id created in the backend
-      callback_url: "http://localhost:5173/premium", // Your success URL
       prefill: {
         name: `${notes?.firstName} ${notes?.lastName}`,
         email: notes?.emailId,
