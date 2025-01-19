@@ -104,7 +104,7 @@ const Premium = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-300 to-gray-400 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-950 py-12 px-4 sm:px-6 lg:px-8">
       {showCelebration && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-[bounce_1s_ease-in-out]">
@@ -141,17 +141,17 @@ const Premium = () => {
 
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-white mb-4">
             Choose Your Plan
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-gray-100">
             Unlock premium features and connect with more friends
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Free Plan */}
-          <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 p-8 border border-gray-100">
+          <div className="bg-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 p-8 border border-gray-100">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Emerald</h2>
               <span className="text-2xl font-bold text-gray-900">₹300</span>
@@ -193,7 +193,7 @@ const Premium = () => {
           </div>
 
           {/* Premium Plan */}
-          <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 p-8 border-2 border-indigo-500 relative">
+          <div className="bg-gray-200 rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 p-8 border-2 border-indigo-500 relative">
             <div className="absolute -top-4 right-4 bg-indigo-500 text-white px-4 py-1 rounded-full text-sm font-medium">
               Popular
             </div>
