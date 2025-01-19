@@ -1,9 +1,26 @@
-import React, { useEffect } from "react";
-import { Crown, Users, Check, X, Clock, MessageCircleIcon } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  Crown,
+  Users,
+  Check,
+  X,
+  Clock,
+  MessageCircleIcon,
+  PartyPopper,
+  Sparkles,
+} from "lucide-react";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
+import { Link } from "react-router-dom";
 
 const Premium = () => {
+  const [isUserPremium, setIsUserPremium] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  useEffect(() => {
+    verifyPremiumUser();
+  }, []);
+
   useEffect(() => {
     // Dynamically load Razorpay script
     const script = document.createElement("script");
@@ -20,7 +37,28 @@ const Premium = () => {
     };
   }, []);
 
+  const verifyPremiumUser = async () => {
+    try {
+      const res = await axios.get(BASE_URL + "/premium/verify", {
+        withCredentials: true,
+      });
+
+      if (res.data.isPremium) {
+        setIsUserPremium(true);
+      }
+    } catch (error) {
+      console.error("Error verifying premium status:", error);
+    }
+  };
+
   const handleMembership = async (membershipType) => {
+    if (isUserPremium) {
+      setShowCelebration(true);
+      // Auto-hide celebration after 5 seconds
+      setTimeout(() => setShowCelebration(false), 5000);
+      return;
+    }
+
     try {
       const response = await axios.post(
         `${BASE_URL}/payment/create-order`,
@@ -47,6 +85,11 @@ const Premium = () => {
           theme: {
             color: membershipType === "diamond" ? "#6366F1" : "#10B981",
           },
+          handler: () => {
+            verifyPremiumUser();
+            setShowCelebration(true);
+            setTimeout(() => setShowCelebration(false), 5000);
+          },
         };
 
         const rzp = new window.Razorpay(options);
@@ -61,6 +104,40 @@ const Premium = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-300 to-gray-400 py-12 px-4 sm:px-6 lg:px-8">
+      {showCelebration && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-[bounce_1s_ease-in-out]">
+            <div className="text-center">
+              <div className="flex justify-center gap-4 mb-6">
+                <PartyPopper className="w-10 h-10 text-yellow-500 animate-[bounce_2s_infinite]" />
+                <Crown className="w-10 h-10 text-purple-500 animate-[bounce_2s_infinite_0.2s]" />
+                <PartyPopper className="w-10 h-10 text-yellow-500 animate-[bounce_2s_infinite_0.4s]" />
+              </div>
+              <Link to="/">
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                  You're Already Premium! 🎉
+                </h2>
+              </Link>
+              <div className="relative">
+                <p className="text-gray-600 mb-6">
+                  You're already enjoying all the exclusive benefits of our
+                  premium membership. Thank you for being an amazing premium
+                  member!
+                </p>
+                <Sparkles className="absolute -right-4 -top-4 text-yellow-400 animate-pulse" />
+                <Sparkles className="absolute -left-4 -bottom-4 text-yellow-400 animate-pulse" />
+              </div>
+              <button
+                onClick={() => setShowCelebration(false)}
+                className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-6 py-3 rounded-full font-semibold hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                Continue Enjoying Premium
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -110,7 +187,7 @@ const Premium = () => {
               onClick={() => handleMembership("emerald")}
               type="button"
             >
-              Buy Emerald
+              {isUserPremium ? "Already Premium" : "Buy Emerald"}
             </button>
           </div>
 
@@ -157,7 +234,7 @@ const Premium = () => {
               onClick={() => handleMembership("diamond")}
             >
               <Crown className="h-5 w-5 mr-2" />
-              Buy Diamond
+              {isUserPremium ? "Already Premium" : "Buy Diamond"}
             </button>
           </div>
         </div>
