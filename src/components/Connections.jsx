@@ -17,6 +17,7 @@ import { Link } from "react-router-dom";
 const Connections = () => {
   const dispatch = useDispatch();
   const connectionData = useSelector((store) => store.connection);
+  console.log(connectionData);
 
   const handleConnections = async () => {
     try {
@@ -191,18 +192,18 @@ const Connections = () => {
         </div>
       </div>
 
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
+      <style>{`
+          @keyframes fadeInUp {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+`}</style>
     </div>
   );
 };
