@@ -6,16 +6,16 @@ const Footer = () => {
     <div>
       <footer className="footer footer-center bg-black text-base-content rounded px-10 py-3 bottom-0">
         <nav className="grid grid-flow-col gap-4 space-x-8">
-          <Link to={"/"} className="link link-hover hover:text-indigo-500">
+          <Link to={"/"} className="link link-hover hover:text-indigo-700">
             About us
           </Link>
-          <Link to={"/"} className="link link-hover hover:text-indigo-500">
+          <Link to={"/"} className="link link-hover hover:text-indigo-700">
             Contact
           </Link>
-          <Link to={"/"} className="link link-hover hover:text-indigo-500">
+          <Link to={"/"} className="link link-hover hover:text-indigo-700">
             Career
           </Link>
-          <Link to={"/"} className="link link-hover hover:text-indigo-500">
+          <Link to={"/"} className="link link-hover hover:text-indigo-700">
             Contribute
           </Link>
         </nav>
