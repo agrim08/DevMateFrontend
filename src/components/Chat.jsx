@@ -1,17 +1,34 @@
-import { X } from "lucide-react";
-import React, { useEffect } from "react";
+import { X, Menu } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { createSocketConnection } from "../utils/socket";
 
 const Chat = () => {
   const { targetUserId } = useParams();
+  const [messages, setMessages] = useState();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const connectionData = useSelector((store) => store.connection);
   const navigate = useNavigate();
+  const user = useSelector((store) => store.user);
+  const userId = user?._id;
 
   // Find the connection with the matching _id
   const targetConnection = connectionData?.find(
-    (connection) => connection._id === targetUserId
+    (connection) => connection?._id === targetUserId
   );
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+    const socket = createSocketConnection();
+    socket.emit("joinChat", { userId, targetUserId });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [userId, targetUserId]);
 
   // Handle case if targetConnection is not found
   if (!targetConnection) {
@@ -20,8 +37,26 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex">
+      {/* Hamburger Menu */}
+      <div className="md:hidden absolute top-4 left-4 z-20">
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="text-white focus:outline-none"
+        >
+          {sidebarOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
+        </button>
+      </div>
+
       {/* Left sidebar with list of connections */}
-      <div className="w-1/5 bg-gray-800 p-4 overflow-y-auto">
+      <div
+        className={`fixed inset-y-0 left-0 bg-gray-800 p-4 overflow-y-auto transform md:relative md:translate-x-0 md:w-1/5 transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <h2 className="text-xl font-bold mb-4">Connections</h2>
         <ul className="space-y-4 ">
           {connectionData.map((connection) => (
@@ -49,8 +84,8 @@ const Chat = () => {
       </div>
 
       {/* Chat area */}
-      <div className="w-4/5 flex flex-col">
-        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-500 to-blue-600  shadow-lg">
+      <div className="w-full md:w-4/5 flex flex-col">
+        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-500 to-blue-600 shadow-lg">
           <div className="flex space-x-3 ml-4">
             <X className="text-red-500 h-7 w-7" />
             <button

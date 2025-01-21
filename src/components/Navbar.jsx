@@ -77,7 +77,7 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo and Brand */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 hidden md:block">
               <Link
                 to="/"
                 className="flex items-center space-x-2 text-white hover:text-indigo-400 transition-colors"
@@ -145,7 +145,7 @@ const Navbar = () => {
 
             {/* Mobile menu button */}
             {user && (
-              <div className="md:hidden">
+              <div className="md:hidden mr-0">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="text-gray-300 hover:text-white focus:outline-none"
