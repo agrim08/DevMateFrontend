@@ -6,12 +6,15 @@ import { createSocketConnection } from "../utils/socket";
 
 const Chat = () => {
   const { targetUserId } = useParams();
-  const [messages, setMessages] = useState();
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const connectionData = useSelector((store) => store.connection);
   const navigate = useNavigate();
+
   const user = useSelector((store) => store.user);
   const userId = user?._id;
+  console.log(user);
 
   // Find the connection with the matching _id
   const targetConnection = connectionData?.find(
@@ -19,20 +22,38 @@ const Chat = () => {
   );
 
   useEffect(() => {
-    if (!userId) {
+    if (!userId || !targetConnection || !targetUserId) {
       return;
     }
     const socket = createSocketConnection();
-    socket.emit("joinChat", { userId, targetUserId });
+    socket.emit("joinChat", {
+      firstName: user.firstName,
+      userId,
+      targetUserId,
+    });
+    socket.on("messageRecieved", ({ firstName, content }) => {
+      console.log(firstName, ": ", content);
+      setMessages((messages) => [...messages, { firstName, content }]);
+    });
 
     return () => {
       socket.disconnect();
     };
-  }, [userId, targetUserId]);
+  }, [userId, targetUserId, targetConnection]);
 
-  // Handle case if targetConnection is not found
+  const sendMessage = () => {
+    const socket = createSocketConnection();
+    socket.emit("sendMessage", {
+      firstName: user?.firstName,
+      userId,
+      targetUserId,
+      content: newMessage,
+    });
+    setNewMessage("");
+  };
+
   if (!targetConnection) {
-    return <div className="text-center text-white mt-10">User not found</div>;
+    return <div className="text-center">User not found</div>;
   }
 
   return (
@@ -105,30 +126,40 @@ const Chat = () => {
           </div>
         </div>
 
-        <div className="flex-grow p-4 overflow-y-auto space-y-4">
-          {/* Chat messages will go here */}
-          <div className="chat chat-start flex flex-col gap-2">
-            <time className="text-xs opacity-50">12:46</time>
-            <div className="chat-bubble bg-gray-800 text-white">
-              Hello! How can I help you today?
+        {/* Chat messages will go here */}
+        {messages?.map((msg, index) => (
+          <div className="flex-grow p-4 overflow-y-auto space-y-4" key={index}>
+            <div className="chat chat-start flex flex-col gap-2">
+              <div className="flex gap-2 space-x-2">
+                <div className="text-xs opacity-50">{msg?.firstName}</div>
+                <time className="text-xs opacity-50">12:46</time>
+              </div>
+              <div className="chat-bubble bg-gray-800 text-white">
+                {msg?.content}
+              </div>
+            </div>
+            <div className="chat chat-end flex flex-col gap-2">
+              <time className="text-xs opacity-50">12:46</time>
+              <div className="chat-bubble bg-indigo-500 text-white">
+                I need some information about our project.
+              </div>
             </div>
           </div>
-          <div className="chat chat-end flex flex-col gap-2">
-            <time className="text-xs opacity-50">12:46</time>
-            <div className="chat-bubble bg-indigo-500 text-white">
-              I need some information about our project.
-            </div>
-          </div>
-        </div>
+        ))}
 
         <div className="p-4 bg-gray-800">
           <div className="flex items-center space-x-4">
             <input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
               type="text"
               placeholder="Type your message..."
               className="w-2/3 flex-grow p-2 rounded-lg border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            <button className="w-1/3 px-4 py-2 bg-indigo-500 rounded-lg hover:bg-indigo-600 transition duration-300">
+            <button
+              className="w-1/3 px-4 py-2 bg-indigo-500 rounded-lg hover:bg-indigo-600 transition duration-300"
+              onClick={() => sendMessage()}
+            >
               Send
             </button>
           </div>

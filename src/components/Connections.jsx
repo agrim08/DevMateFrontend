@@ -16,8 +16,7 @@ import { Link } from "react-router-dom";
 
 const Connections = () => {
   const dispatch = useDispatch();
-  const connectionData = useSelector((store) => store.connection);
-  console.log(connectionData);
+  const connectionData = useSelector((store) => store?.connection);
 
   const handleConnections = async () => {
     try {
