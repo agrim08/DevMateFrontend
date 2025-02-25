@@ -3,52 +3,92 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { createSocketConnection } from "../utils/socket";
+import axios from "axios";
+import { BASE_URL } from "../utils/constants";
 
 const Chat = () => {
   const { targetUserId } = useParams();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const connectionData = useSelector((store) => store.connection);
-  const navigate = useNavigate();
+  const [socket, setSocket] = useState(null);
 
+  const connectionData = useSelector((store) => store.connection);
   const user = useSelector((store) => store.user);
   const userId = user?._id;
-  console.log(user);
+  const navigate = useNavigate();
 
-  // Find the connection with the matching _id
   const targetConnection = connectionData?.find(
     (connection) => connection?._id === targetUserId
   );
 
-  useEffect(() => {
-    if (!userId || !targetConnection || !targetUserId) {
-      return;
+  const fetchChat = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/chat/${targetUserId}`, {
+        withCredentials: true,
+      });
+      setMessages(response.data.messages || []);
+    } catch (error) {
+      console.error("Error fetching chat:", error.message);
     }
-    const socket = createSocketConnection();
-    socket.emit("joinChat", {
+  };
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const newSocket = createSocketConnection();
+    setSocket(newSocket);
+
+    newSocket.emit("joinChat", {
       firstName: user.firstName,
       userId,
       targetUserId,
     });
-    socket.on("messageRecieved", ({ firstName, content }) => {
-      console.log(firstName, ": ", content);
-      setMessages((messages) => [...messages, { firstName, content }]);
+
+    newSocket.on("messageReceived", (message) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
     });
 
     return () => {
-      socket.disconnect();
+      newSocket.disconnect();
     };
-  }, [userId, targetUserId, targetConnection]);
+  }, [userId, targetUserId]);
+
+  useEffect(() => {
+    fetchChat();
+  }, [targetUserId]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("messageReceived", (message) => {
+      setMessages((prevMessages) => {
+        if (
+          prevMessages.some(
+            (msg) =>
+              msg.content === message.content && msg.senderId === message.senderId
+          )
+        ) {
+          return prevMessages;
+        }
+        return [...prevMessages, message];
+      });
+    });
+
+    return () => socket.off("messageReceived");
+  }, [socket]);
 
   const sendMessage = () => {
-    const socket = createSocketConnection();
-    socket.emit("sendMessage", {
-      firstName: user?.firstName,
+    if (!newMessage.trim()) return;
+
+    const message = {
+      firstName: user.firstName,
       userId,
       targetUserId,
       content: newMessage,
-    });
+    };
+
+    socket.emit("sendMessage", message);
     setNewMessage("");
   };
 
@@ -58,7 +98,6 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex">
-      {/* Hamburger Menu */}
       <div className="md:hidden absolute top-4 left-4 z-20">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -72,14 +111,13 @@ const Chat = () => {
         </button>
       </div>
 
-      {/* Left sidebar with list of connections */}
       <div
         className={`fixed inset-y-0 left-0 bg-gray-800 p-4 overflow-y-auto transform md:relative md:translate-x-0 md:w-1/5 transition-transform duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <h2 className="text-xl font-bold mb-4">Connections</h2>
-        <ul className="space-y-4 ">
+        <ul className="space-y-4">
           {connectionData.map((connection) => (
             <li key={connection._id} className="border-b border-gray-500 pb-2">
               <Link
@@ -95,28 +133,23 @@ const Chat = () => {
                   alt="avatar"
                   className="w-10 h-10 rounded-full mr-4"
                 />
-                <span className="text-white text-lg  ">
-                  {connection.firstName}
-                </span>
+                <span className="text-white text-lg">{connection.firstName}</span>
               </Link>
             </li>
           ))}
         </ul>
       </div>
 
-      {/* Chat area */}
       <div className="w-full md:w-4/5 flex flex-col">
         <div className="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-500 to-blue-600 shadow-lg">
-          <div className="flex space-x-3 ml-4">
-            <X className="text-red-500 h-7 w-7" />
-            <button
-              className="text-xl"
-              onClick={() => navigate("/connections")}
-            >
-              Close Chat
-            </button>
-          </div>
-          <div className="flex items-center space-x-4 mr-4">
+          <button
+            className="flex items-center space-x-2 text-red-500"
+            onClick={() => navigate("/connections")}
+          >
+            <X className="h-6 w-6" />
+            <span>Close Chat</span>
+          </button>
+          <div className="flex items-center space-x-4">
             <img
               src={targetConnection.photoUrl || "/default-avatar.png"}
               alt="avatar"
@@ -126,26 +159,34 @@ const Chat = () => {
           </div>
         </div>
 
-        {/* Chat messages will go here */}
-        {messages?.map((msg, index) => (
-          <div className="flex-grow p-4 overflow-y-auto space-y-4" key={index}>
-            <div className="chat chat-start flex flex-col gap-2">
-              <div className="flex gap-2 space-x-2">
-                <div className="text-xs opacity-50">{msg?.firstName}</div>
-                <time className="text-xs opacity-50">12:46</time>
+        <div className="flex-grow p-4 overflow-y-auto">
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`flex flex-col gap-2 mb-4 ${
+                msg.senderId === userId ? "items-end" : "items-start"
+              }`}
+            >
+              <div className="flex gap-2 items-center">
+                <span className="text-xs opacity-50">
+                  {msg.senderId === userId ? "You" : targetConnection.firstName}
+                </span>
+                <time className="text-xs opacity-50">
+                  {new Date(msg.createdAt).toLocaleTimeString()}
+                </time>
               </div>
-              <div className="chat-bubble bg-gray-800 text-white">
-                {msg?.content}
+              <div
+                className={`chat-bubble ${
+                  msg.senderId === userId
+                    ? "bg-indigo-500 text-white"
+                    : "bg-gray-800 text-white"
+                }`}
+              >
+                {msg.content}
               </div>
             </div>
-            <div className="chat chat-end flex flex-col gap-2">
-              <time className="text-xs opacity-50">12:46</time>
-              <div className="chat-bubble bg-indigo-500 text-white">
-                I need some information about our project.
-              </div>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
         <div className="p-4 bg-gray-800">
           <div className="flex items-center space-x-4">
@@ -154,11 +195,11 @@ const Chat = () => {
               onChange={(e) => setNewMessage(e.target.value)}
               type="text"
               placeholder="Type your message..."
-              className="w-2/3 flex-grow p-2 rounded-lg border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-2 rounded-lg border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <button
-              className="w-1/3 px-4 py-2 bg-indigo-500 rounded-lg hover:bg-indigo-600 transition duration-300"
-              onClick={() => sendMessage()}
+              onClick={sendMessage}
+              className="px-4 py-2 bg-indigo-500 rounded-lg hover:bg-indigo-600 transition"
             >
               Send
             </button>
