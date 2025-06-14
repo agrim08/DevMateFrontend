@@ -1,210 +1,163 @@
-import React, { useEffect } from "react";
-import { BASE_URL } from "../utils/constants";
-import { useDispatch, useSelector } from "react-redux";
-import { addConnection } from "../utils/connectionSlice";
-import axios from "axios";
-import {
-  UserCircle,
-  MessageCircle,
-  Loader2,
-  Users,
-  Briefcase,
-  Mail,
-  MapPin,
-} from "lucide-react";
-import { Link } from "react-router-dom";
+"use client"
+
+import { useEffect } from "react"
+import { BASE_URL } from "../utils/constants"
+import { useDispatch, useSelector } from "react-redux"
+import { addConnection } from "../utils/connectionSlice"
+import axios from "axios"
+import { MessageCircle, Loader2, Users, Briefcase, Calendar, MapPin } from "lucide-react"
+import { Link } from "react-router-dom"
+import { Card, CardContent, CardHeader } from "./ui/card"
+import { Button } from "./ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { Badge } from "./ui/badge"
 
 const Connections = () => {
-  const dispatch = useDispatch();
-  const connectionData = useSelector((store) => store?.connection);
+  const dispatch = useDispatch()
+  const connectionData = useSelector((store) => store?.connection)
 
   const handleConnections = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/user/connections`, {
         withCredentials: true,
-      });
-      dispatch(addConnection(res?.data?.data));
+      })
+      dispatch(addConnection(res?.data?.data))
     } catch (error) {
-      console.error(error.response?.data);
+      console.error(error.response?.data)
     }
-  };
+  }
 
   useEffect(() => {
-    handleConnections();
-  }, []);
+    handleConnections()
+  }, [])
 
   if (!connectionData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-gray-400 animate-pulse">
-            Loading your connections...
-          </p>
+          <p className="text-gray-600 text-lg">Loading your connections...</p>
         </div>
       </div>
-    );
+    )
   }
 
   if (connectionData.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col items-center justify-center text-center px-4">
-        <div className="max-w-md w-full bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl">
-          <Users className="w-20 h-20 text-blue-400 mx-auto mb-6" />
-          <h1 className="text-4xl font-bold text-white mb-4">
-            No Connections Yet
-          </h1>
-          <p className="text-gray-400 text-lg mb-6">
-            Start connecting with other users to build your professional
-            network!
-          </p>
-          <div className="animate-bounce text-blue-400">
-            <Users className="w-6 h-6 mx-auto" />
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+        <Card className="max-w-md w-full shadow-lg">
+          <CardContent className="text-center p-8">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Users className="w-10 h-10 text-blue-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">No Connections Yet</h1>
+            <p className="text-gray-600 mb-6">
+              Start connecting with other developers to build your professional network!
+            </p>
+            <Button asChild className="bg-blue-600 hover:bg-blue-700">
+              <Link to="/">Discover Developers</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-900 py-12 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header with animated background */}
-        <div className="relative text-center mb-16">
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-900  to-black blur-3xl" />
-          <div className="relative">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              <span className="text-indigo-500 bg-clip-text ">
-                Your Network
-              </span>
-            </h1>
-            <p className="text-xl text-gray-300 mb-4">
-              Connected with {connectionData.length} Professional
-              {connectionData.length !== 1 ? "s" : ""}
-            </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-blue-700 mx-auto rounded-full" />
-          </div>
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Your Network</h1>
+          <p className="text-xl text-gray-600 mb-4">
+            Connected with {connectionData.length} professional{connectionData.length !== 1 ? "s" : ""}
+          </p>
+          <div className="w-24 h-1 bg-blue-600 mx-auto rounded-full" />
         </div>
 
-        {/* Connections Grid with Masonry-like layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {connectionData.map((connection, index) => {
-            const {
-              _id,
-              photoUrl,
-              skills,
-              userAge,
-              firstName,
-              lastName,
-              bio,
-              gender,
-            } = connection;
+        {/* Connections Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {connectionData.map((connection) => {
+            const { _id, photoUrl, skills, userAge, firstName, lastName, bio, gender } = connection
+            const skillsArray = typeof skills === "string" ? skills.split(",").map((s) => s.trim()) : skills || []
+
             return (
-              <div
-                key={_id}
-                className="group relative bg-white/10 backdrop-blur-xl rounded-2xl overflow-hidden transform hover:scale-[1.02] transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/20"
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                  animation: "fadeInUp 0.5s ease-out forwards",
-                }}
-              >
-                {/* Animated gradient border */}
-                <div
-                  className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{ padding: "1px" }}
-                >
-                  <div className="h-full w-full bg-gray-900 rounded-2xl" />
-                </div>
-
-                <div className="relative p-6">
-                  {/* Profile Image with Glow Effect */}
-                  <div className="relative flex justify-center mb-6">
-                    <div className="absolute inset-0 bg-blue-500 rounded-full blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
-                    {photoUrl ? (
-                      <img
-                        src={photoUrl}
-                        alt={`${firstName} ${lastName}`}
-                        className="w-32 h-32 rounded-full object-cover ring-4 ring-blue-500/30 group-hover:ring-blue-500/50 transition-all duration-500"
-                      />
-                    ) : (
-                      <UserCircle className="w-32 h-32 text-gray-400" />
+              <Card key={_id} className="shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-white flex flex-col h-full">
+                <CardHeader className="text-center pb-4">
+                  <div className="flex justify-center">
+                    <Avatar className="w-24 h-24 mb-4 ring-4 ring-blue-100">
+                      <AvatarImage src={photoUrl || "/placeholder.svg"} alt={`${firstName} ${lastName}`} />
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-4xl font-bold flex items-center justify-center">
+                        {firstName?.charAt(0)?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{`${firstName || ""} ${lastName || ""}`}</h3>
+                  <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
+                    {userAge && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{userAge} years</span>
+                      </div>
+                    )}
+                    {gender && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        <span className="capitalize">{gender}</span>
+                      </div>
                     )}
                   </div>
+                </CardHeader>
 
-                  {/* User Info with Hover Effects */}
-                  <div className="text-center mb-6">
-                    <h2 className="text-2xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors duration-300">
-                      {`${firstName || ""} ${lastName || ""}`}
-                    </h2>
-                    <div className="flex items-center justify-center space-x-3 text-gray-400">
-                      {userAge && (
-                        <span className="flex items-center">
-                          <Mail className="w-4 h-4 mr-1" />
-                          {userAge} years
-                        </span>
-                      )}
-                      {gender && (
-                        <span className="flex items-center">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {gender}
-                        </span>
-                      )}
+                <CardContent className="space-y-4 flex-1 flex flex-col">
+                  {/* Bio */}
+                  {bio && (
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-sm font-medium text-gray-700 mb-1">About</p>
+                      <p className="text-gray-600 text-sm line-clamp-3">{bio}</p>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Bio & Skills with Improved Layout */}
-                  <div className="space-y-4 mb-6">
-                    {bio && (
-                      <div className="bg-white/5 rounded-lg p-4 transform hover:scale-[1.02] transition-transform duration-300">
-                        <p className="text-sm font-medium text-blue-400 mb-2">
-                          About
-                        </p>
-                        <p className="text-gray-300 text-sm line-clamp-3">
-                          {bio}
-                        </p>
+                  {/* Skills */}
+                  {skillsArray.length > 0 && (
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <div className="flex items-center gap-1 mb-2">
+                        <Briefcase className="w-4 h-4 text-gray-600" />
+                        <p className="text-sm font-medium text-gray-700">Skills</p>
                       </div>
-                    )}
-                    {skills && (
-                      <div className="bg-white/5 rounded-lg p-4 transform hover:scale-[1.02] transition-transform duration-300">
-                        <p className="text-sm font-medium text-purple-400 mb-2 flex items-center">
-                          <Briefcase className="w-4 h-4 mr-1" />
-                          Skills
-                        </p>
-                        <p className="text-gray-300 text-sm line-clamp-2">
-                          {skills}
-                        </p>
+                      <div className="flex flex-wrap gap-1">
+                        {skillsArray.slice(0, 4).map((skill, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs bg-blue-50 text-blue-700">
+                            {skill}
+                          </Badge>
+                        ))}
+                        {skillsArray.length > 4 && (
+                          <Badge variant="outline" className="text-xs text-gray-500">
+                            +{skillsArray.length - 4}
+                          </Badge>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
-                  {/* Interactive Chat Button */}
-                  <Link to={`/chat/` + _id}>
-                    <button className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-2 group">
-                      <MessageCircle className="w-5 h-5 group-hover:animate-bounce" />
+                  {/* Spacer to push button to the bottom */}
+                  <div className="flex-1" />
+
+                  {/* Chat Button */}
+                  <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2">
+                    <Link to={`/chat/${_id}`} className="flex items-center justify-center gap-2">
+                      <MessageCircle className="w-4 h-4" />
                       <span>Start Conversation</span>
-                    </button>
-                  </Link>
-                </div>
-              </div>
-            );
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )
           })}
         </div>
       </div>
-
-      <style>{`
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-`}</style>
     </div>
-  );
-};
+  )
+}
 
-export default Connections;
+export default Connections

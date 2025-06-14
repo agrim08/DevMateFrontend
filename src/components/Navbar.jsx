@@ -1,43 +1,43 @@
-import React from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { BASE_URL } from "../utils/constants";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { removeUser } from "../utils/userSlice";
+"use client"
+
+import React from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { BASE_URL } from "../utils/constants"
+import { Link, useNavigate } from "react-router-dom"
+import axios from "axios"
+import { removeUser } from "../utils/userSlice"
+import { Menu, User, Users, Clock, Crown, LogOut, Heart } from "lucide-react"
+
+import { Button } from "./ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import {
-  Menu,
-  X,
-  Rocket,
-  User,
-  Users,
-  Clock,
-  Crown,
-  LogOut,
-} from "lucide-react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog"
 
 const Navbar = () => {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
-  const dropdownRef = React.useRef(null);
-
-  React.useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false)
 
   const handleLogoutClick = () => {
-    setShowLogoutConfirm(true);
-    setIsDropdownOpen(false);
-  };
+    setShowLogoutConfirm(true)
+  }
 
   const handleLogout = async () => {
     try {
@@ -46,186 +46,209 @@ const Navbar = () => {
         {},
         {
           withCredentials: true,
-        }
-      );
+        },
+      )
 
-      dispatch(removeUser());
+      dispatch(removeUser())
 
       if (logoutUser.status === 200) {
-        navigate("/login");
+        navigate("/login")
       }
     } catch (error) {
-      console.log(error.message);
-      return;
+      console.log(error.message)
+      return
     } finally {
-      setShowLogoutConfirm(false);
+      setShowLogoutConfirm(false)
     }
-  };
+  }
 
-  const user = useSelector((store) => store.user);
+  const user = useSelector((store) => store.user)
 
   const menuItems = [
-    { label: "Profile", icon: <User size={18} />, path: "/profile" },
-    { label: "Connections", icon: <Users size={18} />, path: "/connections" },
-    { label: "Pending Requests", icon: <Clock size={18} />, path: "/requests" },
-    { label: "Upgrade", icon: <Crown size={18} />, path: "/premium" },
-  ];
+    { label: "Profile", icon: <User className="w-4 h-4" />, path: "/profile" },
+    { label: "Connections", icon: <Users className="w-4 h-4" />, path: "/connections" },
+    { label: "Pending Requests", icon: <Clock className="w-4 h-4" />, path: "/requests" },
+    { label: "Upgrade", icon: <Crown className="w-4 h-4" />, path: "/premium" },
+  ]
+
+  if (!user) {
+    return null
+  }
 
   return (
     <>
-      <nav className="bg-gradient-to-r from-black to-gray-900 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+      <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between">
             {/* Logo and Brand */}
-            <div className="flex-shrink-0 hidden md:block">
+            <div className="flex items-center">
               <Link
                 to="/"
-                className="flex items-center space-x-2 text-white hover:text-indigo-400 transition-colors"
+                className="flex items-center space-x-3 text-gray-900 hover:text-blue-600 transition-colors duration-200"
               >
-                <Rocket className="h-8 w-8" />
-                <span className="font-bold text-xl">Dev Mate</span>
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+                  <Heart className="h-5 w-5 text-white" />
+                </div>
+                <div className="hidden sm:block">
+                  <span className="font-bold text-xl tracking-tight">DevMate</span>
+                  <p className="text-xs text-gray-500 -mt-1">Connect & Grow</p>
+                </div>
               </Link>
             </div>
 
             {/* Desktop Menu */}
-            {user && (
-              <div className="hidden md:flex items-center space-x-4">
-                <p className="text-indigo-400 font-medium">
-                  Welcome, {user.firstName}
-                </p>
-                <div
-                  ref={dropdownRef}
-                  className="relative"
-                  onMouseEnter={() => setIsDropdownOpen(true)}
-                >
-                  <button
-                    className="flex items-center space-x-2"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  >
-                    <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-indigo-500 hover:ring-indigo-400 transition-all">
-                      <img
-                        alt="user photo"
-                        src={user?.photoUrl}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </button>
+            <div className="hidden md:flex items-center space-x-6">
+              <div className="text-sm text-gray-600">
+                Welcome back, <span className="font-semibold text-gray-900">{user.firstName}</span>
+              </div>
 
-                  {/* Desktop Dropdown */}
-                  <div
-                    className={`absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 transition-all duration-200 ${
-                      isDropdownOpen
-                        ? "opacity-100 visible transform translate-y-0"
-                        : "opacity-0 invisible transform -translate-y-2"
-                    }`}
-                    onMouseLeave={() => setIsDropdownOpen(false)}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative h-10 w-10 rounded-full ring-2 ring-transparent hover:ring-blue-100 transition-all duration-200"
                   >
-                    {menuItems.map((item) => (
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user?.photoUrl || "/placeholder.svg"} alt={user?.firstName} />
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold">
+                        {user?.firstName?.charAt(0)?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64" align="end" forceMount>
+                  <div className="flex items-center justify-start gap-3 p-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={user?.photoUrl || "/placeholder.svg"} alt={user?.firstName} />
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold">
+                        {user?.firstName?.charAt(0)?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col space-y-1">
+                      <p className="font-semibold text-sm text-gray-900">
+                        {user?.firstName} {user?.lastName}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate max-w-[150px]">{user?.emailId}</p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  {menuItems.map((item) => (
+                    <DropdownMenuItem key={item.path} asChild>
                       <Link
-                        key={item.path}
                         to={item.path}
-                        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
-                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center space-x-3 cursor-pointer py-2.5 px-3 hover:bg-gray-50 transition-colors"
                       >
                         {item.icon}
-                        <span>{item.label}</span>
+                        <span className="font-medium">{item.label}</span>
                       </Link>
-                    ))}
-                    <button
-                      onClick={handleLogoutClick}
-                      className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      <LogOut size={18} />
-                      <span>Logout</span>
-                    </button>
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-red-600 focus:text-red-600 cursor-pointer py-2.5 px-3 hover:bg-red-50 transition-colors"
+                    onClick={handleLogoutClick}
+                  >
+                    <LogOut className="mr-3 h-4 w-4" />
+                    <span className="font-medium">Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Mobile menu */}
+            <div className="md:hidden">
+              <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-80">
+                  <SheetHeader>
+                    <SheetTitle className="text-left flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                        <Heart className="h-4 w-4 text-white" />
+                      </div>
+                      <span>DevMate</span>
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-8 space-y-6">
+                    {/* User Info */}
+                    <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
+                      <Avatar className="h-14 w-14">
+                        <AvatarImage src={user?.photoUrl || "/placeholder.svg"} alt={user?.firstName} />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-lg">
+                          {user?.firstName?.charAt(0)?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <p className="font-semibold text-gray-900">
+                          {user?.firstName} {user?.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate max-w-[180px]">{user?.emailId}</p>
+                      </div>
+                    </div>
+
+                    {/* Navigation Items */}
+                    <div className="space-y-2">
+                      {menuItems.map((item) => (
+                        <Button
+                          key={item.path}
+                          variant="ghost"
+                          className="w-full justify-start h-12 text-left hover:bg-gray-50 transition-colors"
+                          asChild
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <Link to={item.path} className="flex items-center space-x-3">
+                            {item.icon}
+                            <span className="font-medium">{item.label}</span>
+                          </Link>
+                        </Button>
+                      ))}
+                    </div>
+
+                    {/* Logout Button */}
+                    <div className="pt-4 border-t">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start h-12 text-red-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        onClick={() => {
+                          setIsMenuOpen(false)
+                          handleLogoutClick()
+                        }}
+                      >
+                        <LogOut className="mr-3 h-4 w-4" />
+                        <span className="font-medium">Sign Out</span>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Mobile menu button */}
-            {user && (
-              <div className="md:hidden mr-0">
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="text-gray-300 hover:text-white focus:outline-none"
-                >
-                  {isMenuOpen ? (
-                    <X className="h-6 w-6" />
-                  ) : (
-                    <Menu className="h-6 w-6" />
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile menu */}
-        {user && (
-          <div className={`md:hidden ${isMenuOpen ? "block" : "hidden"}`}>
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-gray-900">
-              <div className="flex items-center space-x-3 px-3 py-2">
-                <img
-                  alt="user photo"
-                  src={user?.photoUrl}
-                  className="w-10 h-10 rounded-full ring-2 ring-indigo-500"
-                />
-                <p className="text-indigo-400 font-medium">{user.firstName}</p>
-              </div>
-              {menuItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="flex items-center space-x-2 text-gray-300 hover:bg-gray-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-              <button
-                onClick={handleLogoutClick}
-                className="flex items-center space-x-2 text-red-400 hover:bg-gray-800 hover:text-red-300 w-full px-3 py-2 rounded-md text-base font-medium"
-              >
-                <LogOut size={18} />
-                <span>Logout</span>
-              </button>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
-        )}
-      </nav>
+        </div>
+      </header>
 
       {/* Logout Confirmation Dialog */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 transform transition-all">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Confirm Logout
-            </h3>
-            <p className="text-sm text-gray-500 mb-6">
-              Are you sure you want to log out? You'll need to sign in again to
-              access your account.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowLogoutConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md border border-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-semibold text-white">Sign Out</AlertDialogTitle>
+            <AlertDialogDescription className="text-white">
+              Are you sure you want to sign out? You'll need to sign in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="bg-gray-50 text-black hover:text-white hover:bg-black">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout} className="bg-red-600 hover:bg-red-700 focus:ring-red-500 text-white">
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
-  );
-};
+  )
+}
 
-export default Navbar;
+export default Navbar
