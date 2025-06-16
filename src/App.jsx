@@ -12,6 +12,7 @@ import Premium from "./components/Premium";
 import Chat from "./components/Chat";
 import CompleteProfile from "./components/CompleteProfile";
 import Landing from "./components/Landing";
+import Landing from "./components/Landing";
 
 function App() {
   return (
@@ -30,6 +31,9 @@ function App() {
             <Route path="chat/:targetUserId" element={<Chat />} />
             <Route path="complete-profile" element={<CompleteProfile />} />
           </Route>
+          
+          {/* Login route */}
+          <Route path="/login" element={<Login />} />
           
           {/* Login route */}
           <Route path="/login" element={<Login />} />
