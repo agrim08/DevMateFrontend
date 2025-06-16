@@ -39,10 +39,10 @@ const Body = () => {
     if (
       user &&
       !user.isProfileComplete &&
-      location.pathname !== "/complete-profile" &&
+      location.pathname !== "/app/complete-profile" &&
       location.pathname !== "/login"
     ) {
-      navigate("/complete-profile")
+      navigate("/app/complete-profile")
     }
   }, [user, navigate, location.pathname])
 

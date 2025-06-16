@@ -49,10 +49,14 @@ const Landing = () => {
 
   const handleGetStarted = () => {
     if (user) {
-      navigate("/")
+      navigate("/app")
     } else {
       navigate("/login")
     }
+  }
+
+  const handleDashboardClick = () => {
+    navigate("/app")
   }
 
   const features = [
@@ -133,7 +137,7 @@ const Landing = () => {
             </div>
             <div className="flex items-center space-x-4">
               {user ? (
-                <Button onClick={() => navigate("/")} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={handleDashboardClick} className="bg-blue-600 hover:bg-blue-700">
                   Go to Dashboard
                 </Button>
               ) : (

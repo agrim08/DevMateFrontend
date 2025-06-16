@@ -65,10 +65,10 @@ const Navbar = () => {
   const user = useSelector((store) => store.user)
 
   const menuItems = [
-    { label: "Profile", icon: <User className="w-4 h-4" />, path: "/profile" },
-    { label: "Connections", icon: <Users className="w-4 h-4" />, path: "/connections" },
-    { label: "Pending Requests", icon: <Clock className="w-4 h-4" />, path: "/requests" },
-    { label: "Upgrade", icon: <Crown className="w-4 h-4" />, path: "/premium" },
+    { label: "Profile", icon: <User className="w-4 h-4" />, path: "/app/profile" },
+    { label: "Connections", icon: <Users className="w-4 h-4" />, path: "/app/connections" },
+    { label: "Pending Requests", icon: <Clock className="w-4 h-4" />, path: "/app/requests" },
+    { label: "Upgrade", icon: <Crown className="w-4 h-4" />, path: "/app/premium" },
   ]
 
   if (!user) {
@@ -83,7 +83,7 @@ const Navbar = () => {
             {/* Logo and Brand */}
             <div className="flex items-center">
               <Link
-                to="/"
+                to="/app"
                 className="flex items-center space-x-3 text-gray-900 hover:text-blue-600 transition-colors duration-200"
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
