@@ -7,7 +7,7 @@ import { Link, useNavigate } from "react-router-dom"
 import axios from "axios"
 import { removeUser } from "../utils/userSlice"
 import { addRequest } from "../utils/requestSlice"
-import { Menu, User, LogOut, Heart, MessageCircle, Users, Clock, Crown } from "lucide-react"
+import { Menu, User, LogOut, Heart, MessageCircle, Users, Clock, Crown, Globe } from "lucide-react"
 
 import { Button } from "./ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
@@ -87,6 +87,7 @@ const Navbar = () => {
   }
 
   const headerMenuItems = [
+    { label: "Feed", icon: <Globe className="w-4 h-4" />, path: "/app" },
     { label: "Chat", icon: <MessageCircle className="w-4 h-4" />, path: "/app/chat" },
     { label: "Connections", icon: <Users className="w-4 h-4" />, path: "/app/connections" },
     {
@@ -115,7 +116,7 @@ const Navbar = () => {
             {/* Logo and Brand */}
             <div className="flex items-center">
               <Link
-                to="/app"
+                to="/landing"
                 className="flex items-center space-x-3 text-gray-900 hover:text-blue-600 transition-colors duration-200"
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
@@ -130,9 +131,6 @@ const Navbar = () => {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-6">
-              <div className="text-sm text-gray-600">
-                Welcome back, <span className="font-semibold text-gray-900">{user.firstName}</span>
-              </div>
 
               {/* Header Menu Items */}
               <div className="flex items-center space-x-4">
@@ -225,10 +223,12 @@ const Navbar = () => {
                 <SheetContent side="right" className="w-80">
                   <SheetHeader>
                     <SheetTitle className="text-left flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                      <Link to={"/app"}>
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                         <Heart className="h-4 w-4 text-white" />
-                      </div>
-                      <span>DevMate</span>
+                        </div>
+                        <span>DevMate</span>
+                      </Link>
                     </SheetTitle>
                   </SheetHeader>
                   <div className="mt-8 space-y-6">

@@ -33,7 +33,6 @@ const EditProfile = ({ user }) => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
 
-  // Initialize skills from user data
   useEffect(() => {
     if (user?.skills) {
       const skillsArray =
@@ -67,7 +66,6 @@ const EditProfile = ({ user }) => {
     }
   }
 
-  // Real-time preview user object
   const [previewUser, setPreviewUser] = useState({
     firstName,
     lastName,
