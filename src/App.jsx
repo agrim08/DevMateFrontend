@@ -11,12 +11,14 @@ import Requests from "./components/Requests";
 import Premium from "./components/Premium";
 import Chat from "./components/Chat";
 import CompleteProfile from "./components/CompleteProfile";
+import Landing from "./components/Landing";
 
 function App() {
   return (
     <Provider store={appStore}>
       <BrowserRouter basename="/">
         <Routes>
+          <Route path="/landing" element={<Landing />} />
           <Route path="/" element={<Body />}>
             <Route index element={<Feed />} /> {/* Default route */}
             <Route path="/login" element={<Login />} />
