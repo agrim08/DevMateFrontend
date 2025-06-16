@@ -163,7 +163,7 @@ const Premium = () => {
                   asChild
                   className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-semibold"
                 >
-                  <Link to="/">Continue to Dashboard</Link>
+                  <Link to="/app">Continue to Dashboard</Link>
                 </Button>
                 <Button
                   variant="outline"

@@ -20,5 +20,5 @@ export function ThemeProvider({ children }) {
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
-  );``
+  );
 }

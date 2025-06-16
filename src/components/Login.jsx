@@ -65,7 +65,7 @@ const Login = () => {
       const res = await axios.post(`${BASE_URL}/login`, { emailId, password }, { withCredentials: true })
       dispatch(addUser(res.data))
       setIsLoading(false)
-      navigate("/")
+      navigate("/app")
     } catch (error) {
       setIsLoading(false)
       setErrors(error.response?.data?.message || "Login failed")
@@ -91,7 +91,7 @@ const Login = () => {
       setFirstName("")
       setLastName("")
       setPassword("")
-      navigate("/complete-profile")
+      navigate("/app/complete-profile")
     } catch (error) {
       setIsLoading(false)
       setErrors(error.response?.data?.message || "Signup failed")

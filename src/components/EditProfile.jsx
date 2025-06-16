@@ -137,7 +137,7 @@ const EditProfile = ({ user }) => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Button variant="ghost" onClick={() => navigate("/")} className="mb-4 hover:bg-gray-100">
+          <Button variant="ghost" onClick={() => navigate("/app")} className="mb-4 hover:bg-gray-100">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Feed
           </Button>

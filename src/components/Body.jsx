@@ -28,21 +28,19 @@ const Body = () => {
   }
 
   useEffect(() => {
-    // Fetch user data if not present (e.g., on page refresh)
     if (!user) {
       getUser()
     }
   }, [user])
 
   useEffect(() => {
-    // Redirect logic for incomplete profiles
     if (
       user &&
       !user.isProfileComplete &&
-      location.pathname !== "/complete-profile" &&
+      location.pathname !== "/app/complete-profile" &&
       location.pathname !== "/login"
     ) {
-      navigate("/complete-profile")
+      navigate("/app/complete-profile")
     }
   }, [user, navigate, location.pathname])
 

@@ -55,7 +55,7 @@ const Connections = () => {
               Start connecting with other developers to build your professional network!
             </p>
             <Button asChild className="bg-blue-600 hover:bg-blue-700">
-              <Link to="/">Discover Developers</Link>
+              <Link to="/app">Discover Developers</Link>
             </Button>
           </CardContent>
         </Card>
@@ -145,7 +145,7 @@ const Connections = () => {
 
                   {/* Chat Button */}
                   <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2">
-                    <Link to={`/chat/${_id}`} className="flex items-center justify-center gap-2">
+                    <Link to={`/app/chat/${_id}`} className="flex items-center justify-center gap-2">
                       <MessageCircle className="w-4 h-4" />
                       <span>Start Conversation</span>
                     </Link>

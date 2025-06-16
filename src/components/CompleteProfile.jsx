@@ -70,7 +70,7 @@ const CompleteProfile = () => {
 
       if (res.data && res.data.data && res.data.data.isProfileComplete) {
         dispatch(addUser(res.data.data))
-        navigate("/")
+        navigate("/app")
       } else {
         setErrors("Failed to complete profile: Profile not marked as complete.")
       }

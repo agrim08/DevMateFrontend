@@ -158,7 +158,7 @@ const Chat = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-2">User not found</h2>
             <p className="text-gray-600 mb-4">The user you're trying to chat with doesn't exist or isn't connected.</p>
             <Button asChild>
-              <Link to="/connections">Back to Connections</Link>
+              <Link to="/app/connections">Back to Connections</Link>
             </Button>
           </CardContent>
         </Card>
@@ -175,7 +175,7 @@ const Chat = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/connections")}>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/app/connections")}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -185,7 +185,7 @@ const Chat = () => {
             {connectionData?.map((connection) => (
               <Link
                 key={connection._id}
-                to={`/chat/${connection._id}`}
+                to={`/app/chat/${connection._id}`}
                 className={`flex items-center p-3 rounded-lg transition-colors hover:bg-gray-50 ${
                   connection._id === targetUserId ? "bg-blue-50 border border-blue-200" : ""
                 }`}
@@ -219,7 +219,7 @@ const Chat = () => {
               {connectionData?.map((connection) => (
                 <Link
                   key={connection._id}
-                  to={`/chat/${connection._id}`}
+                  to={`/app/chat/${connection._id}`}
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center p-3 rounded-lg transition-colors hover:bg-gray-50 ${
                     connection._id === targetUserId ? "bg-blue-50 border border-blue-200" : ""
@@ -252,7 +252,7 @@ const Chat = () => {
             <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="sm" className="hidden md:flex" onClick={() => navigate("/connections")}>
+            <Button variant="ghost" size="sm" className="hidden md:flex" onClick={() => navigate("/app/connections")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
