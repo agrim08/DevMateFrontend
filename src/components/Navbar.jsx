@@ -1,12 +1,13 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { BASE_URL } from "../utils/constants"
 import { Link, useNavigate } from "react-router-dom"
 import axios from "axios"
 import { removeUser } from "../utils/userSlice"
-import { Menu, User, Users, Clock, Crown, LogOut, Heart } from "lucide-react"
+import { addRequest } from "../utils/requestSlice"
+import { Menu, User, LogOut, Heart, MessageCircle, Users, Clock, Crown } from "lucide-react"
 
 import { Button } from "./ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
@@ -28,12 +29,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog"
+import { Badge } from "./ui/badge"
 
 const Navbar = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false)
+
+  const user = useSelector((store) => store.user)
+  const requests = useSelector((store) => store.request)
+  const requestCount = requests?.length || 0
+
+  // Fetch pending requests
+  const fetchRequests = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/user/requests/pending`, {
+        withCredentials: true,
+      })
+      dispatch(addRequest(res?.data?.data || []))
+    } catch (error) {
+      console.error("Error fetching requests:", error)
+    }
+  }
+
+  useEffect(() => {
+    if (user) {
+      fetchRequests()
+    }
+  }, [user])
 
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true)
@@ -62,13 +86,21 @@ const Navbar = () => {
     }
   }
 
-  const user = useSelector((store) => store.user)
-
-  const menuItems = [
-    { label: "Profile", icon: <User className="w-4 h-4" />, path: "/app/profile" },
+  const headerMenuItems = [
+    { label: "Chat", icon: <MessageCircle className="w-4 h-4" />, path: "/app/chat" },
     { label: "Connections", icon: <Users className="w-4 h-4" />, path: "/app/connections" },
-    { label: "Pending Requests", icon: <Clock className="w-4 h-4" />, path: "/app/requests" },
-    { label: "Upgrade", icon: <Crown className="w-4 h-4" />, path: "/app/premium" },
+    {
+      label: "Requests",
+      icon: <Clock className="w-4 h-4" />,
+      path: "/app/requests",
+      badge: requestCount > 0 ? requestCount : null,
+    },
+    {
+      label: "Premium",
+      icon: <Crown className="w-4 h-4" />,
+      path: "/app/premium",
+      isPremium: true,
+    },
   ]
 
   if (!user) {
@@ -102,6 +134,34 @@ const Navbar = () => {
                 Welcome back, <span className="font-semibold text-gray-900">{user.firstName}</span>
               </div>
 
+              {/* Header Menu Items */}
+              <div className="flex items-center space-x-4">
+                {headerMenuItems.map((item) => (
+                  <div key={item.path} className="relative">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      className={`text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors ${
+                        item.isPremium
+                          ? "bg-amber-400 text-white hover:bg-amber-500 hover:text-white shadow-lg"
+                          : ""
+                      }`}
+                    >
+                      <Link to={item.path} className="flex items-center space-x-2">
+                        {item.icon}
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    </Button>
+                    {item.badge && (
+                      <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs font-bold rounded-full">
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -132,17 +192,15 @@ const Navbar = () => {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  {menuItems.map((item) => (
-                    <DropdownMenuItem key={item.path} asChild>
-                      <Link
-                        to={item.path}
-                        className="flex items-center space-x-3 cursor-pointer py-2.5 px-3 hover:bg-gray-50 transition-colors"
-                      >
-                        {item.icon}
-                        <span className="font-medium">{item.label}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/app/profile"
+                      className="flex items-center space-x-3 cursor-pointer py-2.5 px-3 hover:bg-gray-50 transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      <span className="font-medium">Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-red-600 focus:text-red-600 cursor-pointer py-2.5 px-3 hover:bg-red-50 transition-colors"
@@ -156,7 +214,7 @@ const Navbar = () => {
             </div>
 
             {/* Mobile menu */}
-            <div className="md:hidden">
+            <div className="md:hidden ">
               <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
@@ -191,21 +249,42 @@ const Navbar = () => {
                     </div>
 
                     {/* Navigation Items */}
-                    <div className="space-y-2">
-                      {menuItems.map((item) => (
-                        <Button
-                          key={item.path}
-                          variant="ghost"
-                          className="w-full justify-start h-12 text-left hover:bg-gray-50 transition-colors"
-                          asChild
-                          onClick={() => setIsMenuOpen(false)}
-                        >
-                          <Link to={item.path} className="flex items-center space-x-3">
-                            {item.icon}
-                            <span className="font-medium">{item.label}</span>
-                          </Link>
-                        </Button>
+                    <div className="space-y-2 bg-white text-black">
+                      {headerMenuItems.map((item) => (
+                        <div key={item.path} className="relative">
+                          <Button
+                            variant="ghost"
+                            className={`w-full justify-start h-12 text-left transition-colors ${
+                              item.isPremium
+                                ? "bg-amber-400 text-white hover:bg-amber-500 hover:text-white shadow-lg"
+                                : ""
+                            }`}
+                            asChild
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <Link to={item.path} className="flex items-center space-x-3">
+                              {item.icon}
+                              <span className="font-medium">{item.label}</span>
+                            </Link>
+                          </Button>
+                          {item.badge && (
+                            <Badge className="absolute top-2 right-4 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs font-bold rounded-full">
+                              {item.badge > 99 ? "99+" : item.badge}
+                            </Badge>
+                          )}
+                        </div>
                       ))}
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start h-12 text-left hover:bg-gray-50 transition-colors"
+                        asChild
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Link to="/app/profile" className="flex items-center space-x-3">
+                          <User className="w-4 h-4" />
+                          <span className="font-medium">Profile</span>
+                        </Link>
+                      </Button>
                     </div>
 
                     {/* Logout Button */}
@@ -230,23 +309,29 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* Logout Confirmation Dialog */}
+      {/* Logout Confirmation Dialog with Backdrop Blur */}
       <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
-        <AlertDialogContent className="sm:max-w-md">
+        <AlertDialogContent className="sm:max-w-md backdrop-blur-sm bg-white text-black">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-semibold text-white">Sign Out</AlertDialogTitle>
-            <AlertDialogDescription className="text-white">
+            <AlertDialogTitle className="text-xl font-semibold text-gray-900">Sign Out</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600">
               Are you sure you want to sign out? You'll need to sign in again to access your account.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="bg-gray-50 text-black hover:text-white hover:bg-black">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLogout} className="bg-red-600 hover:bg-red-700 focus:ring-red-500 text-white">
+            <AlertDialogCancel className="bg-gray-50 text-gray-900 hover:bg-gray-100">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-500 text-white"
+            >
               Sign Out
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Backdrop Blur Overlay for Logout Dialog */}
+      {showLogoutConfirm && <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" />}
     </>
   )
 }

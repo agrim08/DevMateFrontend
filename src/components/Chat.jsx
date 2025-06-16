@@ -1,6 +1,6 @@
 "use client"
 
-import { X, Menu, Send, ArrowLeft, MoreVertical, Phone, Video } from "lucide-react"
+import { X, Menu, Send, ArrowLeft, MoreVertical, Phone, Video, MessageCircle, Search } from "lucide-react"
 import { useEffect, useState, useRef } from "react"
 import { useSelector } from "react-redux"
 import { useParams, Link, useNavigate } from "react-router-dom"
@@ -13,6 +13,8 @@ import { Input } from "./ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { ScrollArea } from "./ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet"
+import { addConnection } from "../utils/connectionSlice"
+import { useDispatch } from "react-redux"
 
 const Chat = () => {
   const { targetUserId } = useParams()
@@ -21,6 +23,7 @@ const Chat = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [socket, setSocket] = useState(null)
   const [isTyping, setIsTyping] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -31,6 +34,12 @@ const Chat = () => {
 
   const targetConnection = connectionData?.find((connection) => connection?._id === targetUserId)
 
+  // Filter connections based on search term
+  const filteredConnections =
+    connectionData?.filter((connection) =>
+      `${connection.firstName} ${connection.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()),
+    ) || []
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
@@ -40,6 +49,7 @@ const Chat = () => {
   }, [messages])
 
   const fetchChat = async () => {
+    if (!targetUserId) return
     try {
       const response = await axios.get(`${BASE_URL}/chat/${targetUserId}`, {
         withCredentials: true,
@@ -56,22 +66,17 @@ const Chat = () => {
     const newSocket = createSocketConnection()
     setSocket(newSocket)
 
-    newSocket.emit("joinChat", {
-      firstName: user.firstName,
-      userId,
-      targetUserId,
-    })
+    if (targetUserId) {
+      newSocket.emit("joinChat", {
+        firstName: user.firstName,
+        userId,
+        targetUserId,
+      })
 
-    newSocket.on("messageReceived", (message) => {
-      setMessages((prevMessages) => [...prevMessages, message])
-    })
-
-    // newSocket.on("userTyping", ({ userId: typingUserId }) => {
-    //   if (typingUserId !== userId) {
-    //     setIsTyping(true)
-    //     setTimeout(() => setIsTyping(false), 3000)
-    //   }
-    // })
+      newSocket.on("messageReceived", (message) => {
+        setMessages((prevMessages) => [...prevMessages, message])
+      })
+    }
 
     return () => {
       newSocket.disconnect()
@@ -97,9 +102,29 @@ const Chat = () => {
     return () => socket.off("messageReceived")
   }, [socket])
 
+  const dispatch = useDispatch()
+
+  // Add this useEffect to fetch connections when component mounts
+  useEffect(() => {
+    const handleConnections = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/user/connections`, {
+          withCredentials: true,
+        })
+        dispatch(addConnection(res?.data?.data))
+      } catch (error) {
+        console.error("Error fetching connections:", error.response?.data)
+      }
+    }
+
+    if (!connectionData || connectionData.length === 0) {
+      handleConnections()
+    }
+  }, [dispatch, connectionData])
+
   const sendMessage = (e) => {
     e?.preventDefault()
-    if (!newMessage.trim()) return
+    if (!newMessage.trim() || !targetUserId) return
 
     const message = {
       firstName: user.firstName,
@@ -114,7 +139,7 @@ const Chat = () => {
   }
 
   const handleTyping = () => {
-    if (socket) {
+    if (socket && targetUserId) {
       socket.emit("typing", { userId, targetUserId })
     }
   }
@@ -150,6 +175,146 @@ const Chat = () => {
     return groups
   }
 
+  // Show welcome screen when no chat is selected
+  if (!targetUserId) {
+    return (
+      <div className="h-screen bg-gray-50 flex overflow-hidden">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:flex md:w-80 bg-white border-r border-gray-200 flex-col">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/app/connections")}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="relative flex items-center">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search conversations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+              <Button variant="ghost" className="absolute right-0" onClick={() => setSearchTerm("")}>
+                <X className="cursor-pointer h-5 w-5"/>
+              </Button>
+            </div>
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-2">
+              {filteredConnections.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No conversations found</p>
+                </div>
+              ) : (
+                filteredConnections.map((connection) => (
+                  <Link
+                    key={connection._id}
+                    to={`/app/chat/${connection._id}`}
+                    className="flex items-center p-3 rounded-lg transition-colors hover:bg-gray-50"
+                  >
+                    <Avatar className="h-12 w-12 mr-3">
+                      <AvatarImage src={connection.photoUrl || "/placeholder.svg"} alt={connection.firstName} />
+                      <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
+                        {connection.firstName?.charAt(0)?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">
+                        {connection.firstName} {connection.lastName}
+                      </p>
+                      <p className="text-sm text-gray-500 truncate">Click to start chatting</p>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Mobile Sidebar */}
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent side="left" className="w-80 p-0">
+            <SheetHeader className="p-4 border-b">
+              <SheetTitle>Messages</SheetTitle>
+            </SheetHeader>
+            <div className="p-4 border-b ">
+              <div className="relative flex items-center">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search conversations..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+                <Button variant="ghost" className="absolute right-0" onClick={() => setSearchTerm("")}>
+                  <X className="cursor-pointer h-5 w-5"/>
+                </Button>
+              </div>
+            </div>
+            <ScrollArea className="flex-1">
+              <div className="p-2">
+                {filteredConnections.map((connection) => (
+                  <Link
+                    key={connection._id}
+                    to={`/app/chat/${connection._id}`}
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center p-3 rounded-lg transition-colors hover:bg-gray-50"
+                  >
+                    <Avatar className="h-12 w-12 mr-3">
+                      <AvatarImage src={connection.photoUrl || "/placeholder.svg"} alt={connection.firstName} />
+                      <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
+                        {connection.firstName?.charAt(0)?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">
+                        {connection.firstName} {connection.lastName}
+                      </p>
+                      <p className="text-sm text-gray-500 truncate">Click to start chatting</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
+
+        {/* Welcome Screen */}
+        <div className="flex-1 flex flex-col bg-white min-h-0">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white flex-shrink-0 md:hidden">
+            <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
+              <Menu className="h-5 w-5" />
+            </Button>
+            <h1 className="font-semibold text-gray-900">Messages</h1>
+            <div></div>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center p-8">
+            <div className="text-center max-w-md">
+              <div className="w-32 h-32 mx-auto mb-8 bg-gray-100 rounded-full flex items-center justify-center">
+                <MessageCircle className="w-16 h-16 text-gray-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">DevMate Chat</h2>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                Connect and chat with fellow developers from around the world. Share ideas, collaborate on projects, and
+                build meaningful professional relationships.
+              </p>
+              <div className="space-y-2 text-sm text-gray-500">
+                <p>• Real-time messaging</p>
+                <p>• Secure conversations</p>
+                <p>• Professional networking</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error if user not found
   if (!targetConnection) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -158,7 +323,7 @@ const Chat = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-2">User not found</h2>
             <p className="text-gray-600 mb-4">The user you're trying to chat with doesn't exist or isn't connected.</p>
             <Button asChild>
-              <Link to="/app/connections">Back to Connections</Link>
+              <Link to="/app/chat">Back to Messages</Link>
             </Button>
           </CardContent>
         </Card>
@@ -179,10 +344,19 @@ const Chat = () => {
               <X className="h-4 w-4" />
             </Button>
           </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search conversations..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
         <ScrollArea className="flex-1">
           <div className="p-2">
-            {connectionData?.map((connection) => (
+            {filteredConnections.map((connection) => (
               <Link
                 key={connection._id}
                 to={`/app/chat/${connection._id}`}
@@ -214,9 +388,20 @@ const Chat = () => {
           <SheetHeader className="p-4 border-b">
             <SheetTitle>Messages</SheetTitle>
           </SheetHeader>
+          <div className="p-4 border-b">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search conversations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
           <ScrollArea className="flex-1">
             <div className="p-2">
-              {connectionData?.map((connection) => (
+              {filteredConnections.map((connection) => (
                 <Link
                   key={connection._id}
                   to={`/app/chat/${connection._id}`}
@@ -252,7 +437,7 @@ const Chat = () => {
             <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="sm" className="hidden md:flex" onClick={() => navigate("/app/connections")}>
+            <Button variant="ghost" size="sm" className="hidden md:flex" onClick={() => navigate("/app/chat")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>

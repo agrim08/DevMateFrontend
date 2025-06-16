@@ -378,18 +378,24 @@ const Landing = () => {
                 Building the future of developer networking.
               </p>
               <div className="flex space-x-4">
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-gray-400 hover:text-white">
-                  <Github className="h-4 w-4 text-gray-600" />
-                  <span className="sr-only">GitHub</span>
-                </Button>
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-gray-400 hover:text-white">
-                  <Twitter className="h-4 w-4 text-gray-600" />
-                  <span className="sr-only">Twitter</span>
-                </Button>
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-gray-400 hover:text-white">
-                  <Linkedin className="h-4 w-4 text-gray-600" />
-                  <span className="sr-only">LinkedIn</span>
-                </Button>
+                <a href="https://github.com/agrim08" target="_blank">
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-gray-100">
+                    <Github className="h-4 w-4 text-gray-600" />
+                    <span className="sr-only">GitHub</span>
+                  </Button>
+                </a>
+                <a href="https://www.linkedin.com/in/agrim-gupta08" target="_blank">
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-gray-100">
+                    <Linkedin className="h-4 w-4 text-gray-600" />
+                    <span className="sr-only">LinkedIn</span>
+                  </Button>
+                </a>
+                <a href="https://x.com/AgrimGupta0805" target="_blank">
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-gray-100">
+                    <Twitter className="h-4 w-4 text-gray-600" />
+                    <span className="sr-only">Twitter</span>
+                  </Button>
+                </a>
               </div>
             </div>
             

@@ -8,14 +8,17 @@ import axios from "axios"
 import { BASE_URL } from "../utils/constants"
 import { useDispatch } from "react-redux"
 import { Textarea } from "./ui/textarea"
-import { User, Calendar, Users, Briefcase, LinkIcon, Heart, CheckCircle } from "lucide-react"
+import { User, Calendar, Users, Briefcase, LinkIcon, Heart, CheckCircle, X } from 'lucide-react'
 import { useNavigate } from "react-router-dom"
 import { addUser } from "../utils/userSlice"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { Badge } from "./ui/badge"
 
 const CompleteProfile = () => {
   const [userAge, setUserAge] = useState("")
   const [bio, setBio] = useState("")
-  const [skills, setSkills] = useState("")
+  const [skills, setSkills] = useState([])
+  const [currentSkill, setCurrentSkill] = useState("")
   const [photoUrl, setPhotoUrl] = useState("")
   const [gender, setGender] = useState("")
   const [errors, setErrors] = useState("")
@@ -24,19 +27,37 @@ const CompleteProfile = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
+  const addSkill = () => {
+    if (currentSkill.trim() && !skills.includes(currentSkill.trim())) {
+      setSkills([...skills, currentSkill.trim()])
+      setCurrentSkill("")
+    }
+  }
+
+  const removeSkill = (skillToRemove) => {
+    setSkills(skills.filter(skill => skill !== skillToRemove))
+  }
+
+  const handleSkillKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      addSkill()
+    }
+  }
+
   const validateInputs = () => {
     let validationErrors = ""
     if (!userAge || isNaN(Number.parseInt(userAge)) || Number.parseInt(userAge) < 1) {
       validationErrors += "Please enter a valid age.\n"
     }
-    if (!gender || !["male", "female", "others"].includes(gender.toLowerCase())) {
-      validationErrors += "Gender must be male, female, or others.\n"
+    if (!gender) {
+      validationErrors += "Please select your gender.\n"
     }
     if (!bio || bio.length < 20 || bio.length > 150) {
       validationErrors += "Bio must be between 20 and 150 characters.\n"
     }
-    if (!skills || !skills.trim()) {
-      validationErrors += "Please provide at least one skill.\n"
+    if (skills.length < 3) {
+      validationErrors += "Please add at least 3 skills.\n"
     }
     if (photoUrl && !/^https?:\/\/[^\s/$.?#].[^\s]*$/.test(photoUrl)) {
       validationErrors += "Please provide a valid URL for the photo.\n"
@@ -61,7 +82,7 @@ const CompleteProfile = () => {
         {
           userAge: Number.parseInt(userAge),
           bio,
-          skills,
+          skills: skills.join(", "),
           photoUrl,
           gender: gender.toLowerCase(),
         },
@@ -136,17 +157,17 @@ const CompleteProfile = () => {
                     Gender <span className="text-red-500">*</span>
                   </Label>
                   <div className="relative">
-                    <Input
-                      id="gender"
-                      name="gender"
-                      type="text"
-                      placeholder="male, female, others"
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value)}
-                      className="h-11 pl-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                      required
-                    />
-                    <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Select value={gender} onValueChange={setGender}>
+                      <SelectTrigger className="h-11 pl-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="others">Others</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
               </div>
@@ -173,18 +194,60 @@ const CompleteProfile = () => {
               <div className="space-y-2">
                 <Label htmlFor="skills" className="text-sm font-semibold text-gray-700">
                   Skills <span className="text-red-500">*</span>
+                  <span className="text-xs text-gray-500 ml-2">
+                    ({skills.length}/3 minimum)
+                  </span>
                 </Label>
                 <div className="relative">
-                  <Textarea
+                  <Input
                     id="skills"
                     name="skills"
-                    placeholder="List your technical skills, programming languages, frameworks, etc. (comma-separated)"
-                    value={skills}
-                    onChange={(e) => setSkills(e.target.value)}
-                    className="min-h-[100px] pl-11 pr-4 py-3 border-gray-200 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                    placeholder="Type a skill and press Enter"
+                    value={currentSkill}
+                    onChange={(e) => setCurrentSkill(e.target.value)}
+                    onKeyPress={handleSkillKeyPress}
+                    className="h-11 pl-11 pr-20 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   />
-                  <Briefcase className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Button
+                    type="button"
+                    onClick={addSkill}
+                    disabled={!currentSkill.trim()}
+                    className="absolute right-1 top-1 h-9 px-3 text-xs"
+                  >
+                    Add
+                  </Button>
                 </div>
+                
+                {/* Skills Display */}
+                {skills.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3 p-3 bg-gray-50 rounded-lg">
+                    {skills.map((skill, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="bg-blue-100 text-blue-800 hover:bg-blue-200 pr-1"
+                      >
+                        {skill}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-4 w-4 p-0 ml-1 hover:bg-blue-300 rounded-full"
+                          onClick={() => removeSkill(skill)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                
+                {skills.length < 3 && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Add at least 3 skills to continue
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -214,7 +277,7 @@ const CompleteProfile = () => {
               <Button
                 type="submit"
                 className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-semibold text-white shadow-lg transition-all duration-200"
-                disabled={isLoading}
+                disabled={isLoading || skills.length < 3}
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-2">

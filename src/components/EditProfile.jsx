@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import UserCard from "./UserCard"
 import { useDispatch } from "react-redux"
 import { BASE_URL } from "../utils/constants"
 import { addUser } from "../utils/userSlice"
 import axios from "axios"
-import { User, AtSign, Calendar, Users, Briefcase, LinkIcon, Loader2, Save, ArrowLeft } from "lucide-react"
+import { User, AtSign, Calendar, Users, Briefcase, LinkIcon, Loader2, Save, ArrowLeft, X } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Button } from "./ui/button"
@@ -14,15 +14,18 @@ import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 import { Label } from "./ui/label"
 import { Alert, AlertDescription } from "./ui/alert"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { Badge } from "./ui/badge"
 import toast from "react-hot-toast"
 
 const EditProfile = ({ user }) => {
   const [firstName, setFirstName] = useState(user?.firstName || "")
   const [lastName, setLastName] = useState(user?.lastName || "")
-  const [userAge, setUserAge] = useState(user?.userAge || "")
+  const [userAge, setUserAge] = useState(user?.userAge?.toString() || "")
   const [gender, setGender] = useState(user?.gender || "")
   const [bio, setBio] = useState(user?.bio || "")
-  const [skills, setSkills] = useState(user?.skills || "")
+  const [skills, setSkills] = useState([])
+  const [currentSkill, setCurrentSkill] = useState("")
   const [photoUrl, setPhotoUrl] = useState(user?.photoUrl || "")
   const [errors, setErrors] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -30,15 +33,63 @@ const EditProfile = ({ user }) => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
 
-  const previewUser = {
+  // Initialize skills from user data
+  useEffect(() => {
+    if (user?.skills) {
+      const skillsArray =
+        typeof user.skills === "string"
+          ? user.skills
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : Array.isArray(user.skills)
+            ? user.skills
+            : []
+      setSkills(skillsArray)
+    }
+  }, [user?.skills])
+
+  const addSkill = () => {
+    if (currentSkill.trim() && !skills.includes(currentSkill.trim())) {
+      setSkills([...skills, currentSkill.trim()])
+      setCurrentSkill("")
+    }
+  }
+
+  const removeSkill = (skillToRemove) => {
+    setSkills(skills.filter((skill) => skill !== skillToRemove))
+  }
+
+  const handleSkillKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      addSkill()
+    }
+  }
+
+  // Real-time preview user object
+  const [previewUser, setPreviewUser] = useState({
     firstName,
     lastName,
-    userAge,
+    userAge: userAge ? Number.parseInt(userAge) : user?.userAge,
     bio,
-    skills,
+    skills: skills.join(", "),
     photoUrl,
     gender,
-  }
+  })
+
+  // Update preview user whenever form fields change
+  useEffect(() => {
+    setPreviewUser({
+      firstName: firstName || user?.firstName,
+      lastName: lastName || user?.lastName,
+      userAge: userAge ? Number.parseInt(userAge) : user?.userAge,
+      bio: bio || user?.bio,
+      skills: skills.join(", "),
+      photoUrl: photoUrl || user?.photoUrl,
+      gender: gender || user?.gender,
+    })
+  }, [firstName, lastName, userAge, gender, bio, skills, photoUrl, user])
 
   const validateInputs = () => {
     let validationErrors = ""
@@ -67,7 +118,12 @@ const EditProfile = ({ user }) => {
       setIsLoading(true)
       const res = await axios.put(
         `${BASE_URL}/profile/edit`,
-        { userAge: userAge ? Number.parseInt(userAge) : undefined, bio, skills, photoUrl },
+        {
+          userAge: userAge ? Number.parseInt(userAge) : undefined,
+          bio,
+          skills: skills.join(", "),
+          photoUrl,
+        },
         {
           withCredentials: true,
           headers: { "Content-Type": "application/json" },
@@ -187,14 +243,57 @@ const EditProfile = ({ user }) => {
                   maxLength={150}
                 />
 
-                <TextAreaField
-                  icon={Briefcase}
-                  label="Skills"
-                  id="skills"
-                  value={skills}
-                  onChange={(e) => setSkills(e.target.value)}
-                  placeholder="List your technical skills, programming languages, frameworks, etc. (comma-separated)"
-                />
+                {/* Skills Section with Chips */}
+                <div className="space-y-2">
+                  <Label htmlFor="skills" className="text-sm font-semibold text-gray-700">
+                    Skills
+                    <span className="text-xs text-gray-500 ml-2">({skills.length} skills)</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="skills"
+                      name="skills"
+                      placeholder="Type a skill and press Enter"
+                      value={currentSkill}
+                      onChange={(e) => setCurrentSkill(e.target.value)}
+                      onKeyPress={handleSkillKeyPress}
+                      className="h-11 pl-11 pr-20 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Button
+                      type="button"
+                      onClick={addSkill}
+                      disabled={!currentSkill.trim()}
+                      className="absolute right-1 top-1 h-9 px-3 text-xs"
+                    >
+                      Add
+                    </Button>
+                  </div>
+
+                  {/* Skills Display */}
+                  {skills.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3 p-3 bg-gray-50 rounded-lg">
+                      {skills.map((skill, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="bg-blue-100 text-blue-800 hover:bg-blue-200 pr-1"
+                        >
+                          {skill}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 w-4 p-0 ml-1 hover:bg-blue-300 rounded-full"
+                            onClick={() => removeSkill(skill)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InputField
@@ -206,14 +305,24 @@ const EditProfile = ({ user }) => {
                     onChange={(e) => setUserAge(e.target.value)}
                     placeholder="Enter your age"
                   />
-                  <InputField
-                    icon={Users}
-                    label="Gender"
-                    id="gender"
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    placeholder="male, female, others"
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="gender" className="text-sm font-semibold text-gray-700">
+                      Gender
+                    </Label>
+                    <div className="relative">
+                      <Select value={gender} onValueChange={setGender}>
+                        <SelectTrigger className="h-11 pl-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="others">Others</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
                 </div>
 
                 <InputField

@@ -1,5 +1,4 @@
 /** @type {import('tailwindcss').Config} */
-import daisyui from "daisyui";
 // ✅ Use default import and destructure to avoid CommonJS import issues
 import defaultTheme from "tailwindcss/defaultTheme";
 
@@ -23,8 +22,5 @@ export default {
       },
     },
   },
-  plugins: [daisyui],
-  daisyui: {
-    themes: ["light", "dark", "cupcake", "black", "nord"],
-  },
+  
 };
