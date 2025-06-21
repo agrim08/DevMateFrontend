@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useSelector } from "react-redux"
@@ -145,7 +143,7 @@ const Landing = () => {
                   <Button variant="ghost" onClick={() => navigate("/login")}>
                     Sign In
                   </Button>
-                  <Button onClick={handleGetStarted} className="bg-blue-600 hover:bg-blue-700">
+                  <Button onClick={handleGetStarted} className="bg-blue-600 hover:bg-blue-700 text-white">
                     Get Started
                   </Button>
                 </>

@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { BASE_URL } from "../utils/constants"
@@ -116,7 +114,7 @@ const Navbar = () => {
             {/* Logo and Brand */}
             <div className="flex items-center">
               <Link
-                to="/landing"
+                to="/app"
                 className="flex items-center space-x-3 text-gray-900 hover:text-blue-600 transition-colors duration-200"
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">

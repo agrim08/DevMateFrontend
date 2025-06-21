@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import UserCard from "./UserCard"
 import { useDispatch } from "react-redux"

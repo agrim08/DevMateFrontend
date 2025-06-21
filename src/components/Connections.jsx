@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect } from "react"
 import { BASE_URL } from "../utils/constants"
 import { useDispatch, useSelector } from "react-redux"

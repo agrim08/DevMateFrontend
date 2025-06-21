@@ -1,5 +1,3 @@
-"use client"
-
 import { X, Menu, Send, ArrowLeft, MoreVertical, Phone, Video, MessageCircle, Search } from "lucide-react"
 import { useEffect, useState, useRef } from "react"
 import { useSelector } from "react-redux"
@@ -196,9 +194,9 @@ const Chat = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
-              <Button variant="ghost" className="absolute right-0" onClick={() => setSearchTerm("")}>
+             {searchTerm &&  <Button variant="ghost" className="absolute right-0" onClick={() => setSearchTerm("")}>
                 <X className="cursor-pointer h-5 w-5"/>
-              </Button>
+              </Button>}
             </div>
           </div>
           <ScrollArea className="flex-1">

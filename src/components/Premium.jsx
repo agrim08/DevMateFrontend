@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Crown, Users, Check, X, Clock, MessageCircle, PartyPopper, Sparkles, Star, Zap } from "lucide-react"
 import axios from "axios"

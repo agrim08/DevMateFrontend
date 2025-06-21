@@ -1,5 +1,3 @@
-"use client"
-
 import { BASE_URL } from "../utils/constants"
 import axios from "axios"
 import { useDispatch } from "react-redux"
