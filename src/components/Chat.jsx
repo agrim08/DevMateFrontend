@@ -58,28 +58,26 @@ const Chat = () => {
     }
   }
 
-  useEffect(() => {
-    if (!userId) return
-
-    const newSocket = createSocketConnection()
-    setSocket(newSocket)
-
+useEffect(() => {
+  if (!userId) return;
+  const newSocket = createSocketConnection();           // io(BASE_URL)
+  
+  newSocket.on("connect", () => {
+    console.log("⚡️ Socket.IO connected, id =", newSocket.id);
     if (targetUserId) {
       newSocket.emit("joinChat", {
         firstName: user.firstName,
         userId,
         targetUserId,
-      })
-
-      newSocket.on("messageReceived", (message) => {
-        setMessages((prevMessages) => [...prevMessages, message])
-      })
+      });
+      console.log("→ joinChat emitted");
     }
+  });
 
-    return () => {
-      newSocket.disconnect()
-    }
-  }, [userId, targetUserId])
+  setSocket(newSocket);
+  return () => newSocket.disconnect();
+}, [userId, targetUserId]);
+
 
   useEffect(() => {
     fetchChat()
@@ -120,21 +118,24 @@ const Chat = () => {
     }
   }, [dispatch, connectionData])
 
-  const sendMessage = (e) => {
-    e?.preventDefault()
-    if (!newMessage.trim() || !targetUserId) return
+ const sendMessage = (e) => {
+  e?.preventDefault();
+  if (!newMessage.trim() || !targetUserId) return;
 
-    const message = {
-      firstName: user.firstName,
-      userId,
-      targetUserId,
-      content: newMessage.trim(),
-    }
+  const message = {
+    firstName: user.firstName,
+    userId,
+    targetUserId,
+    content: newMessage.trim(),
+  };
 
-    socket.emit("sendMessage", message)
-    setNewMessage("")
-    inputRef.current?.focus()
-  }
+  console.log("→ sending sendMessage:", message);
+  socket.emit("sendMessage", message);
+
+  setNewMessage("");
+  inputRef.current?.focus();
+};
+
 
   const handleTyping = () => {
     if (socket && targetUserId) {
@@ -240,7 +241,7 @@ const Chat = () => {
             </SheetHeader>
             <div className="p-4 border-b ">
               <div className="relative flex items-center">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-4 w-4" />
                 <Input
                   placeholder="Search conversations..."
                   value={searchTerm}
