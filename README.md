@@ -1,11 +1,10 @@
-```markdown
 # DevMate Frontend
 
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
 The frontend for DevMate - A Tinder-like platform for developers to connect, built with React, TypeScript, and Tailwind CSS.
 
-🔗 **Backend Repository**: [DevMate Backend](https://github.com/agrim08/DevMate)
+🔗 **Backend Repository**: [DevMate Backend](https://github.com/yourusername/devmate-backend)
 
 ## Features
 
@@ -29,6 +28,14 @@ The frontend for DevMate - A Tinder-like platform for developers to connect, bui
 - **Real-time**: Socket.io Client
 - **Build Tool**: Vite
 - **Theming**: next-themes
+
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+VITE_API_BASE_URL=http://localhost:3001
+VITE_SOCKET_URL=http://localhost:3001
 
 
 ```bash
