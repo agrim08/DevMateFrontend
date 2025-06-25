@@ -29,7 +29,7 @@ The frontend for DevMate - A Tinder-like platform for developers to connect, bui
 - **Real-time**: Socket.io Client
 - **Build Tool**: Vite
 - **Theming**: next-themes
-```
+
 
 ```bash
 git clone https://github.com/yourusername/DevMateFrontend.git
@@ -63,3 +63,4 @@ The frontend is deployed on AWS EC2 behind an Nginx server.
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+```
