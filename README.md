@@ -29,14 +29,6 @@ The frontend for DevMate - A Tinder-like platform for developers to connect, bui
 - **Build Tool**: Vite
 - **Theming**: next-themes
 
-## Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```env
-VITE_API_BASE_URL=http://localhost:3001
-VITE_SOCKET_URL=http://localhost:3001
-
 
 ```bash
 git clone https://github.com/yourusername/DevMateFrontend.git
@@ -57,7 +49,7 @@ npm run dev
 npm run build
 ```
 
-/public
+
 src/
 ├── assets/          # Static assets
 ├── components/      # Reusable components
@@ -70,4 +62,3 @@ The frontend is deployed on AWS EC2 behind an Nginx server.
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-```
