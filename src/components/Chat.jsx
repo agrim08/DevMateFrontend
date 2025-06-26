@@ -52,32 +52,38 @@ const Chat = () => {
       const response = await axios.get(`${BASE_URL}/chat/${targetUserId}`, {
         withCredentials: true,
       })
-      setMessages(response.data.messages || [])
+      const chatMessages = response?.data?.messages.map(msg => ({
+        senderId: msg.senderId._id,
+        firstName: msg.senderId.firstName,
+        lastName: msg.senderId.lastName,
+        content: msg.content,
+        createdAt: msg.createdAt,
+      }))
+      setMessages(chatMessages || [])
     } catch (error) {
       console.error("Error fetching chat:", error.message)
     }
   }
 
-useEffect(() => {
-  if (!userId) return;
-  const newSocket = createSocketConnection();           // io(BASE_URL)
-  
-  newSocket.on("connect", () => {
-    console.log("⚡️ Socket.IO connected, id =", newSocket.id);
-    if (targetUserId) {
-      newSocket.emit("joinChat", {
-        firstName: user.firstName,
-        userId,
-        targetUserId,
-      });
-      console.log("→ joinChat emitted");
-    }
-  });
+  useEffect(() => {
+    if (!userId) return;
+    const newSocket = createSocketConnection();
+    
+    newSocket.on("connect", () => {
+      console.log("⚡️ Socket.IO connected, id =", newSocket.id);
+      if (targetUserId) {
+        newSocket.emit("joinChat", {
+          firstName: user.firstName,
+          userId,
+          targetUserId,
+        });
+        console.log("→ joinChat emitted");
+      }
+    });
 
-  setSocket(newSocket);
-  return () => newSocket.disconnect();
-}, [userId, targetUserId]);
-
+    setSocket(newSocket);
+    return () => newSocket.disconnect();
+  }, [userId, targetUserId]);
 
   useEffect(() => {
     fetchChat()
@@ -87,11 +93,18 @@ useEffect(() => {
     if (!socket) return
 
     socket.on("messageReceived", (message) => {
+      const newMessage = {
+        senderId: message.senderId._id,
+        firstName: message.senderId.firstName,
+        lastName: message.senderId.lastName,
+        content: message.content,
+        createdAt: message.createdAt,
+      }
       setMessages((prevMessages) => {
-        if (prevMessages.some((msg) => msg.content === message.content && msg.senderId === message.senderId)) {
+        if (prevMessages.some((msg) => msg.content === newMessage.content && msg.senderId === newMessage.senderId)) {
           return prevMessages
         }
-        return [...prevMessages, message]
+        return [...prevMessages, newMessage]
       })
     })
 
@@ -100,7 +113,6 @@ useEffect(() => {
 
   const dispatch = useDispatch()
 
-  // Add this useEffect to fetch connections when component mounts
   useEffect(() => {
     const handleConnections = async () => {
       try {
@@ -113,29 +125,28 @@ useEffect(() => {
       }
     }
 
-    if (!connectionData || connectionData.length === 0) {
+    if (!connectionData || connectionData?.length === 0) {
       handleConnections()
     }
   }, [dispatch, connectionData])
 
- const sendMessage = (e) => {
-  e?.preventDefault();
-  if (!newMessage.trim() || !targetUserId) return;
+  const sendMessage = (e) => {
+    e?.preventDefault();
+    if (!newMessage.trim() || !targetUserId) return;
 
-  const message = {
-    firstName: user.firstName,
-    userId,
-    targetUserId,
-    content: newMessage.trim(),
+    const message = {
+      firstName: user.firstName,
+      userId,
+      targetUserId,
+      content: newMessage.trim(),
+    };
+
+    console.log("→ sending sendMessage:", message);
+    socket.emit("sendMessage", message);
+
+    setNewMessage("");
+    inputRef.current?.focus();
   };
-
-  console.log("→ sending sendMessage:", message);
-  socket.emit("sendMessage", message);
-
-  setNewMessage("");
-  inputRef.current?.focus();
-};
-
 
   const handleTyping = () => {
     if (socket && targetUserId) {
@@ -174,11 +185,9 @@ useEffect(() => {
     return groups
   }
 
-  // Show welcome screen when no chat is selected
   if (!targetUserId) {
     return (
       <div className="h-screen bg-gray-50 flex overflow-hidden">
-        {/* Desktop Sidebar */}
         <div className="hidden md:flex md:w-80 bg-white border-r border-gray-200 flex-col">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
@@ -202,7 +211,7 @@ useEffect(() => {
           </div>
           <ScrollArea className="flex-1">
             <div className="p-2">
-              {filteredConnections.length === 0 ? (
+              {filteredConnections?.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                   <p>No conversations found</p>
@@ -233,7 +242,6 @@ useEffect(() => {
           </ScrollArea>
         </div>
 
-        {/* Mobile Sidebar */}
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetContent side="left" className="w-80 p-0">
             <SheetHeader className="p-4 border-b">
@@ -281,7 +289,6 @@ useEffect(() => {
           </SheetContent>
         </Sheet>
 
-        {/* Welcome Screen */}
         <div className="flex-1 flex flex-col bg-white min-h-0">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white flex-shrink-0 md:hidden">
             <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
@@ -313,7 +320,6 @@ useEffect(() => {
     )
   }
 
-  // Show error if user not found
   if (!targetConnection) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -334,7 +340,6 @@ useEffect(() => {
 
   return (
     <div className="h-screen bg-gray-50 flex overflow-hidden">
-      {/* Desktop Sidebar */}
       <div className="hidden md:flex md:w-80 bg-white border-r border-gray-200 flex-col">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
@@ -381,7 +386,6 @@ useEffect(() => {
         </ScrollArea>
       </div>
 
-      {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="w-80 p-0">
           <SheetHeader className="p-4 border-b">
@@ -428,9 +432,7 @@ useEffect(() => {
         </SheetContent>
       </Sheet>
 
-      {/* Chat Area */}
       <div className="flex-1 flex flex-col bg-white min-h-0">
-        {/* Chat Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white flex-shrink-0">
           <div className="flex items-center space-x-3">
             <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setSidebarOpen(true)}>
@@ -450,7 +452,6 @@ useEffect(() => {
               <h3 className="font-semibold text-gray-900">
                 {targetConnection.firstName} {targetConnection.lastName}
               </h3>
-              <p className="text-sm text-gray-500">{isTyping ? "Typing..." : "Online"}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -466,18 +467,15 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Messages Area */}
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-4 space-y-4">
               {Object.entries(messageGroups).map(([date, dateMessages]) => (
                 <div key={date}>
-                  {/* Date Separator */}
                   <div className="flex items-center justify-center my-4">
                     <div className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full font-medium">{date}</div>
                   </div>
 
-                  {/* Messages for this date */}
                   {dateMessages.map((msg, index) => {
                     const isOwnMessage = msg.senderId === userId
                     const showAvatar =
@@ -504,12 +502,16 @@ useEffect(() => {
                           className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"} max-w-xs lg:max-w-md`}
                         >
                           <div
-                            className={`px-4 py-2 rounded-2xl shadow-sm ${
+                            className={`inline-block px-4 py-2 rounded-2xl shadow-sm ${
                               isOwnMessage
                                 ? "bg-blue-600 text-white rounded-br-md"
                                 : "bg-gray-100 text-gray-900 rounded-bl-md"
                             }`}
+                            style={{ minWidth: `${Math.max(msg.firstName?.length, msg.content?.length) * 0.6 + 2}rem` }}
                           >
+                            <p className={`text-xs mb-1 font-bold ${isOwnMessage ? "text-white/70" : "text-blue-600"}`}>
+                              {isOwnMessage ? user.firstName : msg.firstName}
+                            </p>
                             <p className="text-sm leading-relaxed break-words">{msg.content}</p>
                           </div>
                           <span className="text-xs text-gray-500 mt-1 px-2">{formatTime(msg.createdAt)}</span>
@@ -520,7 +522,6 @@ useEffect(() => {
                 </div>
               ))}
 
-              {/* Typing Indicator */}
               {isTyping && (
                 <div className="flex items-end space-x-2 mb-3">
                   <Avatar className="h-8 w-8">
@@ -547,7 +548,6 @@ useEffect(() => {
           </ScrollArea>
         </div>
 
-        {/* Message Input - Fixed at bottom */}
         <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
           <form onSubmit={sendMessage} className="flex items-center space-x-3">
             <div className="flex-1 relative">
