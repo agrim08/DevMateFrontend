@@ -1,76 +1,81 @@
-import { X, Menu, Send, ArrowLeft, MoreVertical, Phone, Video, MessageCircle, Search } from "lucide-react"
-import { useEffect, useState, useRef } from "react"
-import { useSelector } from "react-redux"
-import { useParams, Link, useNavigate } from "react-router-dom"
-import { createSocketConnection } from "../utils/socket"
-import axios from "axios"
-import { BASE_URL } from "../utils/constants"
-import { Card, CardContent } from "./ui/card"
-import { Button } from "./ui/button"
-import { Input } from "./ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-import { ScrollArea } from "./ui/scroll-area"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet"
-import { addConnection } from "../utils/connectionSlice"
-import { useDispatch } from "react-redux"
+import { X, Menu, Send, ArrowLeft, MoreVertical, Phone, Video, MessageCircle, Search } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { useSelector } from "react-redux";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { createSocketConnection } from "../utils/socket";
+import axios from "axios";
+import { BASE_URL } from "../utils/constants";
+import { Card, CardContent } from "./ui/card";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { ScrollArea } from "./ui/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
+import { addConnection } from "../utils/connectionSlice";
+import { useDispatch } from "react-redux";
 
 const Chat = () => {
-  const { targetUserId } = useParams()
-  const [messages, setMessages] = useState([])
-  const [newMessage, setNewMessage] = useState("")
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [socket, setSocket] = useState(null)
-  const [isTyping, setIsTyping] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const messagesEndRef = useRef(null)
-  const inputRef = useRef(null)
+  const { targetUserId } = useParams();
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [socket, setSocket] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState(null); // New state for errors
+  const [connectionStatus, setConnectionStatus] = useState("connecting"); // Track socket connection
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
-  const connectionData = useSelector((store) => store.connection)
-  const user = useSelector((store) => store.user)
-  const userId = user?._id
-  const navigate = useNavigate()
+  const connectionData = useSelector((store) => store.connection);
+  const user = useSelector((store) => store.user);
+  const userId = user?._id;
+  const navigate = useNavigate();
 
-  const targetConnection = connectionData?.find((connection) => connection?._id === targetUserId)
+  const targetConnection = connectionData?.find((connection) => connection?._id === targetUserId);
 
-  // Filter connections based on search term
   const filteredConnections =
     connectionData?.filter((connection) =>
-      `${connection.firstName} ${connection.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()),
-    ) || []
+      `${connection.firstName} ${connection.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, []);
 
   const fetchChat = async () => {
-    if (!targetUserId) return
+    if (!targetUserId) return;
     try {
       const response = await axios.get(`${BASE_URL}/chat/${targetUserId}`, {
         withCredentials: true,
-      })
-      const chatMessages = response?.data?.messages.map(msg => ({
+      });
+      const chatMessages = response?.data?.messages.map((msg) => ({
         senderId: msg.senderId._id,
         firstName: msg.senderId.firstName,
         lastName: msg.senderId.lastName,
         content: msg.content,
         createdAt: msg.createdAt,
-      }))
-      setMessages(chatMessages || [])
+      }));
+      setMessages(chatMessages || []);
+      setError(null); 
     } catch (error) {
-      console.error("Error fetching chat:", error.message)
+      setError("Failed to load chat history. Please try again.");
+      console.error("Error fetching chat:", error.message);
     }
-  }
+  };
 
   useEffect(() => {
     if (!userId) return;
     const newSocket = createSocketConnection();
-    
+
     newSocket.on("connect", () => {
       console.log("⚡️ Socket.IO connected, id =", newSocket.id);
+      setConnectionStatus("connected");
+      setError(null);
       if (targetUserId) {
         newSocket.emit("joinChat", {
           firstName: user.firstName,
@@ -81,109 +86,181 @@ const Chat = () => {
       }
     });
 
+    newSocket.on("connect_error", (err) => {
+      setConnectionStatus("disconnected");
+      setError("Connection failed. Please check your network.");
+      console.error("Socket connection error:", err.message);
+    });
+
+    newSocket.on("reconnect", () => {
+      setConnectionStatus("connected");
+      setError(null);
+      console.log("Socket reconnected");
+      if (targetUserId) {
+        newSocket.emit("joinChat", {
+          firstName: user.firstName,
+          userId,
+          targetUserId,
+        });
+      }
+    });
+
+    newSocket.on("error", ({ message }) => {
+      setError(message);
+      console.error("Socket error from server:", message);
+    });
+
     setSocket(newSocket);
-    return () => newSocket.disconnect();
+    return () => {
+      newSocket.off("connect");
+      newSocket.off("connect_error");
+      newSocket.off("reconnect");
+      newSocket.off("error");
+      newSocket.off("messageReceived");
+      newSocket.disconnect();
+    };
   }, [userId, targetUserId]);
 
   useEffect(() => {
-    fetchChat()
-  }, [targetUserId])
+    fetchChat();
+  }, [targetUserId]);
 
   useEffect(() => {
-    if (!socket) return
+    if (!socket) return;
 
     socket.on("messageReceived", (message) => {
       const newMessage = {
-        senderId: message.senderId._id,
-        firstName: message.senderId.firstName,
-        lastName: message.senderId.lastName,
+        senderId: message.senderId,
+        firstName: message.firstName,
         content: message.content,
         createdAt: message.createdAt,
-      }
+      };
       setMessages((prevMessages) => {
-        if (prevMessages.some((msg) => msg.content === newMessage.content && msg.senderId === newMessage.senderId)) {
-          return prevMessages
+        const isDuplicate = prevMessages.some(
+          (msg) =>
+            msg.senderId === newMessage.senderId &&
+            msg.content === newMessage.content &&
+            Math.abs(new Date(msg.createdAt) - new Date(newMessage.createdAt)) < 1000
+        );
+        if (isDuplicate) {
+          return prevMessages;
         }
-        return [...prevMessages, newMessage]
-      })
-    })
+        return [...prevMessages, newMessage];
+      });
+      setError(null); 
+    });
 
-    return () => socket.off("messageReceived")
-  }, [socket])
+    return () => socket.off("messageReceived");
+  }, [socket]);
 
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const handleConnections = async () => {
       try {
         const res = await axios.get(`${BASE_URL}/user/connections`, {
           withCredentials: true,
-        })
-        dispatch(addConnection(res?.data?.data))
+        });
+        dispatch(addConnection(res?.data?.data));
+        setError(null);
       } catch (error) {
-        console.error("Error fetching connections:", error.response?.data)
+        setError("Failed to load connections. Please try again.");
+        console.error("Error fetching connections:", error.response?.data);
       }
-    }
+    };
 
     if (!connectionData || connectionData?.length === 0) {
-      handleConnections()
+      handleConnections();
     }
-  }, [dispatch, connectionData])
+  }, [dispatch, connectionData]);
 
-  const sendMessage = (e) => {
+  const sendMessage = async (e) => {
     e?.preventDefault();
     if (!newMessage.trim() || !targetUserId) return;
 
     const message = {
+      senderId: userId,
+      firstName: user.firstName,
+      content: newMessage.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    // Optimistically add message
+    setMessages((prevMessages) => [...prevMessages, message]);
+
+    try {
+      socket.emit("sendMessage", {
+        firstName: user.firstName,
+        userId,
+        targetUserId,
+        content: newMessage.trim(),
+      });
+      setNewMessage("");
+      inputRef.current?.focus();
+      setError(null);
+    } catch (error) {
+      setError("Failed to send message. Please try again.");
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.createdAt === message.createdAt && msg.status === "sending"
+            ? { ...msg, status: "failed" }
+            : msg
+        )
+      );
+      console.error("Send message error:", error.message);
+    }
+  };
+
+  const retryMessage = (failedMessage) => {
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg.createdAt === failedMessage.createdAt ? { ...msg, status: "sending" } : msg
+      )
+    );
+    socket.emit("sendMessage", {
       firstName: user.firstName,
       userId,
       targetUserId,
-      content: newMessage.trim(),
-    };
-
-    console.log("→ sending sendMessage:", message);
-    socket.emit("sendMessage", message);
-
-    setNewMessage("");
-    inputRef.current?.focus();
+      content: failedMessage.content,
+    });
   };
 
   const handleTyping = () => {
     if (socket && targetUserId) {
-      socket.emit("typing", { userId, targetUserId })
+      socket.emit("typing", { userId, targetUserId });
     }
-  }
+  };
 
   const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-  }
+    return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
 
   const formatDate = (timestamp) => {
-    const date = new Date(timestamp)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return "Today"
+      return "Today";
     } else if (date.toDateString() === yesterday.toDateString()) {
-      return "Yesterday"
+      return "Yesterday";
     } else {
-      return date.toLocaleDateString()
+      return date.toLocaleDateString();
     }
-  }
+  };
 
   const groupMessagesByDate = (messages) => {
-    const groups = {}
+    const groups = {};
     messages.forEach((message) => {
-      const date = formatDate(message.createdAt)
+      const date = formatDate(message.createdAt);
       if (!groups[date]) {
-        groups[date] = []
+        groups[date] = [];
       }
-      groups[date].push(message)
-    })
-    return groups
-  }
+      groups[date].push(message);
+    });
+    return groups;
+  };
 
   if (!targetUserId) {
     return (
@@ -204,9 +281,11 @@ const Chat = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
-             {searchTerm &&  <Button variant="ghost" className="absolute right-0" onClick={() => setSearchTerm("")}>
-                <X className="cursor-pointer h-5 w-5"/>
-              </Button>}
+              {searchTerm && (
+                <Button variant="ghost" className="absolute right-0" onClick={() => setSearchTerm("")}>
+                  <X className="cursor-pointer h-5 w-5" />
+                </Button>
+              )}
             </div>
           </div>
           <ScrollArea className="flex-1">
@@ -225,7 +304,7 @@ const Chat = () => {
                   >
                     <Avatar className="h-12 w-12 mr-3">
                       <AvatarImage src={connection.photoUrl || "/placeholder.svg"} alt={connection.firstName} />
-                      <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
+                      <AvatarFallback className="bg-bluejel-100 text-blue-600 font-semibold">
                         {connection.firstName?.charAt(0)?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -247,18 +326,20 @@ const Chat = () => {
             <SheetHeader className="p-4 border-b">
               <SheetTitle>Messages</SheetTitle>
             </SheetHeader>
-            <div className="p-4 border-b ">
+            <div className="p-4 border-b">
               <div className="relative flex items-center">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Search conversations..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
-                <Button variant="ghost" className="absolute right-0" onClick={() => setSearchTerm("")}>
-                  <X className="cursor-pointer h-5 w-5"/>
-                </Button>
+                {searchTerm && (
+                  <Button variant="ghost" className="absolute right-0" onClick={() => setSearchTerm("")}>
+                    <X className="cursor-pointer h-5 w-5" />
+                  </Button>
+                )}
               </div>
             </div>
             <ScrollArea className="flex-1">
@@ -317,7 +398,7 @@ const Chat = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!targetConnection) {
@@ -333,10 +414,10 @@ const Chat = () => {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
-  const messageGroups = groupMessagesByDate(messages)
+  const messageGroups = groupMessagesByDate(messages);
 
   return (
     <div className="h-screen bg-gray-50 flex overflow-hidden">
@@ -452,6 +533,13 @@ const Chat = () => {
               <h3 className="font-semibold text-gray-900">
                 {targetConnection.firstName} {targetConnection.lastName}
               </h3>
+              {/* <p className="text-sm text-gray-500">
+                {connectionStatus === "connected"
+                  ? "Online"
+                  : connectionStatus === "disconnected"
+                  ? "Offline"
+                  : "Connecting..."}
+              </p> */}
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -467,6 +555,23 @@ const Chat = () => {
           </div>
         </div>
 
+        {error && (
+          <div className="p-4 bg-red-100 text-red-700 text-sm text-center">
+            {error}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-2 text-red-700 underline"
+              onClick={() => {
+                setError(null);
+                fetchChat();
+              }}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-4 space-y-4">
@@ -477,9 +582,9 @@ const Chat = () => {
                   </div>
 
                   {dateMessages.map((msg, index) => {
-                    const isOwnMessage = msg.senderId === userId
+                    const isOwnMessage = msg.senderId === userId;
                     const showAvatar =
-                      !isOwnMessage && (index === 0 || dateMessages[index - 1]?.senderId !== msg.senderId)
+                      !isOwnMessage && (index === 0 || dateMessages[index - 1]?.senderId !== msg.senderId);
 
                     return (
                       <div
@@ -504,7 +609,7 @@ const Chat = () => {
                           <div
                             className={`inline-block px-4 py-2 rounded-2xl shadow-sm ${
                               isOwnMessage
-                                ? "bg-blue-600 text-white rounded-br-md"
+                                ? `bg-blue-600 text-white rounded-br-md ${msg.status === "failed" ? "opacity-50" : ""}`
                                 : "bg-gray-100 text-gray-900 rounded-bl-md"
                             }`}
                             style={{ minWidth: `${Math.max(msg.firstName?.length, msg.content?.length) * 0.6 + 2}rem` }}
@@ -513,11 +618,24 @@ const Chat = () => {
                               {isOwnMessage ? user.firstName : msg.firstName}
                             </p>
                             <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+                            {msg.status === "sending" && (
+                              <p className="text-xs text-gray-300">Sending...</p>
+                            )}
+                            {msg.status === "failed" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-500 text-xs mt-1"
+                                onClick={() => retryMessage(msg)}
+                              >
+                                Retry
+                              </Button>
+                            )}
                           </div>
                           <span className="text-xs text-gray-500 mt-1 px-2">{formatTime(msg.createdAt)}</span>
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               ))}
@@ -555,17 +673,18 @@ const Chat = () => {
                 ref={inputRef}
                 value={newMessage}
                 onChange={(e) => {
-                  setNewMessage(e.target.value)
-                  handleTyping()
+                  setNewMessage(e.target.value);
+                  handleTyping();
                 }}
                 placeholder="Type your message..."
                 className="pr-12 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-full"
                 maxLength={1000}
+                disabled={connectionStatus !== "connected"}
               />
               <Button
                 type="submit"
                 size="sm"
-                disabled={!newMessage.trim()}
+                disabled={!newMessage.trim() || connectionStatus !== "connected"}
                 className="absolute right-1 top-1 h-10 w-10 rounded-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="h-4 w-4" />
@@ -575,7 +694,7 @@ const Chat = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Chat
+export default Chat;
