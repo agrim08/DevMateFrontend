@@ -3,12 +3,14 @@ import axios from "axios"
 import { BASE_URL } from "../utils/constants"
 import { useDispatch, useSelector } from "react-redux"
 import { addRequest, removeRequest } from "../utils/requestSlice"
-import { Loader2, UserPlus, Check, X, Briefcase, Calendar, MapPin } from "lucide-react"
-import toast from "react-hot-toast"
+import { toast } from "sonner"
+import { UserPlus, Check, X, Briefcase, Calendar, MapPin } from "lucide-react"
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Badge } from "./ui/badge"
+import FullScreenLoader from "./FullScreenLoader"
+import EmptyState from "./EmptyState"
 
 const Requests = () => {
   const dispatch = useDispatch()
@@ -42,32 +44,18 @@ const Requests = () => {
   }
 
   if (!requests) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg">Loading connection requests...</p>
-        </div>
-      </div>
-    )
+    return <FullScreenLoader message="Loading connection requests..." />
   }
 
   if (requests.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-        <Card className="max-w-md w-full shadow-lg">
-          <CardContent className="text-center p-8">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <UserPlus className="w-10 h-10 text-green-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">All Caught Up!</h1>
-            <p className="text-gray-600 mb-6">You have no pending connection requests at the moment</p>
-            <Button asChild className="bg-blue-600 hover:bg-blue-700">
-              <a href="/">Discover More Developers</a>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <EmptyState
+        icon={UserPlus}
+        title="All Caught Up!"
+        description="You have no pending connection requests at the moment"
+        buttonText="Discover More Developers"
+        buttonLink="/app"
+      />
     )
   }
 

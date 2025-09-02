@@ -219,7 +219,6 @@ const CompleteProfile = () => {
                   </Button>
                 </div>
                 
-                {/* Skills Display */}
                 {skills.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-3 p-3 bg-gray-50 rounded-lg">
                     {skills.map((skill, index) => (

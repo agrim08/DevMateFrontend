@@ -3,12 +3,14 @@ import { BASE_URL } from "../utils/constants"
 import { useDispatch, useSelector } from "react-redux"
 import { addConnection } from "../utils/connectionSlice"
 import axios from "axios"
-import { MessageCircle, Loader2, Users, Briefcase, Calendar, MapPin } from "lucide-react"
+import { MessageCircle, Users, Briefcase, Calendar, MapPin } from "lucide-react"
 import { Link } from "react-router-dom"
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Badge } from "./ui/badge"
+import FullScreenLoader from "./FullScreenLoader"
+import EmptyState from "./EmptyState"
 
 const Connections = () => {
   const dispatch = useDispatch()
@@ -30,34 +32,18 @@ const Connections = () => {
   }, [])
 
   if (!connectionData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg">Loading your connections...</p>
-        </div>
-      </div>
-    )
+    return <FullScreenLoader message="Loading your connections..." />
   }
 
   if (connectionData.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-        <Card className="max-w-md w-full shadow-lg">
-          <CardContent className="text-center p-8">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Users className="w-10 h-10 text-blue-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">No Connections Yet</h1>
-            <p className="text-gray-600 mb-6">
-              Start connecting with other developers to build your professional network!
-            </p>
-            <Button asChild className="bg-blue-600 hover:bg-blue-700">
-              <Link to="/app">Discover Developers</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <EmptyState
+        icon={Users}
+        title="No Connections Yet"
+        description="Start connecting with other developers to build your professional network!"
+        buttonText="Discover Developers"
+        buttonLink="/app"
+      />
     )
   }
 

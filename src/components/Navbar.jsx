@@ -111,7 +111,6 @@ const Navbar = () => {
       <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
-            {/* Logo and Brand */}
             <div className="flex items-center">
               <Link
                 to="/app"
@@ -127,7 +126,6 @@ const Navbar = () => {
               </Link>
             </div>
 
-            {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-6">
 
               {/* Header Menu Items */}
@@ -218,14 +216,17 @@ const Navbar = () => {
                     <span className="sr-only">Open menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-80">
+                <SheetContent side="right" className="w-80 bg-white">
                   <SheetHeader>
                     <SheetTitle className="text-left flex items-center space-x-3">
                       <Link to={"/app"}>
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                        <Heart className="h-4 w-4 text-white" />
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+                          <Heart className="h-5 w-5 text-white" />
                         </div>
-                        <span>DevMate</span>
+                        <div className="hidden sm:block">
+                          <span className="font-bold text-xl tracking-tight">DevMate</span>
+                          <p className="text-xs text-gray-500 -mt-1">Connect & Grow</p>
+                        </div>
                       </Link>
                     </SheetTitle>
                   </SheetHeader>
@@ -252,7 +253,7 @@ const Navbar = () => {
                         <div key={item.path} className="relative">
                           <Button
                             variant="ghost"
-                            className={`w-full justify-start h-12 text-left transition-colors ${
+                            className={`w-full justify-start h-12 text-left transition-colors hover:bg-blue-50 ${
                               item.isPremium
                                 ? "bg-amber-400 text-white hover:bg-amber-500 hover:text-white shadow-lg"
                                 : ""
@@ -274,7 +275,7 @@ const Navbar = () => {
                       ))}
                       <Button
                         variant="ghost"
-                        className="w-full justify-start h-12 text-left hover:bg-gray-50 transition-colors"
+                        className="w-full justify-start h-12 text-left hover:bg-blue-50 transition-colors"
                         asChild
                         onClick={() => setIsMenuOpen(false)}
                       >
