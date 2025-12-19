@@ -68,36 +68,41 @@ const Login = () => {
       navigate("/app")
     } catch (error) {
       setIsLoading(false)
-      setErrors(error.response?.data?.message || "Login failed")
-      console.error("Login failed:", error.message)
+      const msg = error.response?.data || "Login failed"
+      if (msg.includes("verify your email")) {
+        navigate("/verify-email", {
+          state: { emailId },
+        })
+      } else {
+        setErrors(msg)
+      }
     }
   }
 
   const handleSignUp = async (e) => {
-    e.preventDefault()
-    setErrors("")
-    if (!validateInputs()) return
+  e.preventDefault()
+  setErrors("")
+  if (!validateInputs()) return
 
-    try {
-      setIsLoading(true)
-      const res = await axios.post(
-        `${BASE_URL}/signup`,
-        { emailId, password, firstName, lastName },
-        { withCredentials: true },
-      )
-      dispatch(addUser(res.data))
-      setIsLoading(false)
-      setEmailId("")
-      setFirstName("")
-      setLastName("")
-      setPassword("")
-      navigate("/app/complete-profile")
-    } catch (error) {
-      setIsLoading(false)
-      setErrors(error.response?.data?.message || "Signup failed")
-      console.error("Signup failed:", error.message)
-    }
+  try {
+    setIsLoading(true)
+    await axios.post(
+      `${BASE_URL}/signup`,
+      { emailId, password, firstName, lastName },
+      { withCredentials: true }
+    )
+
+    setIsLoading(false)
+
+    navigate("/verify-email", {
+      state: { emailId },
+    })
+  } catch (error) {
+    setIsLoading(false)
+    setErrors(error.response?.data || "Signup failed")
   }
+}
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
