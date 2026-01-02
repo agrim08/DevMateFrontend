@@ -150,7 +150,7 @@ const UserCard = ({ user }) => {
 
         .floating-heart {
           position: absolute;
-          font-size: 24px;
+          font-size: 32px;
           animation: heartFloat 2s ease-out forwards;
           pointer-events: none;
           z-index: 1000;
@@ -158,124 +158,116 @@ const UserCard = ({ user }) => {
 
         .floating-x {
           position: absolute;
-          font-size: 24px;
+          font-size: 32px;
           animation: xFloat 2s ease-out forwards;
           pointer-events: none;
           z-index: 1000;
         }
-
-        .card-loading {
-          opacity: 0.7;
-          pointer-events: none;
-          transition: opacity 0.3s ease;
-        }
       `}</style>
 
-      <div className={`w-full max-w-2xl mx-auto transition-all duration-300 ${isLoading ? "card-loading" : ""}`}>
-        <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-white relative overflow-hidden">
-          {/* Loading Overlay */}
-          {isLoading && (
-            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center">
-              <div className="flex flex-col items-center space-y-3">
-                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-sm text-gray-600 font-medium">Loading next profile...</p>
-              </div>
-            </div>
-          )}
 
-          <CardHeader className="pb-4">
-            <div className="flex flex-col sm:flex-row gap-6">
-              {/* Profile Image */}
-              <div className="flex-shrink-0 mx-auto sm:mx-0">
-                <Avatar className="w-32 h-32 ring-4 ring-blue-100">
-                  <AvatarImage src={photoUrl || "/placeholder.svg"} alt={`${firstName} ${lastName}`} />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-2xl font-bold">
-                    {firstName?.charAt(0)?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-
-              {/* User Info */}
-              <div className="flex-1 text-center sm:text-left">
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">{`${firstName || ""} ${lastName || ""}`}</h2>
-
-                {/* User Details */}
-                <div className="flex flex-wrap gap-4 justify-center sm:justify-start mb-4">
-                  {userAge && (
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      <span className="text-sm font-medium">{userAge} years</span>
-                    </div>
-                  )}
-                  {gender && (
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <User className="w-4 h-4" />
-                      <span className="text-sm font-medium capitalize">{gender}</span>
-                    </div>
-                  )}
+      <div className="flex justify-center flex-1 items-center p-4 font-sans h-[calc(100vh-200px)] min-h-[500px]">
+        <div className={`relative w-full max-w-sm h-full transition-all duration-500 ease-out ${isLoading ? "card-loading" : ""}`}>
+          
+          {/* Main Card Container */}
+          <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl bg-gray-900 group">
+            
+            {/* Background Image or Fallback */}
+            <div className="absolute inset-0 w-full h-full">
+              {photoUrl ? (
+                <img 
+                  src={photoUrl} 
+                  alt={`${firstName} ${lastName}`}
+                  className="w-full h-full object-cover object-center"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                   <span className="text-9xl font-bold text-white/20 select-none">
+                     {firstName?.charAt(0)?.toUpperCase()}
+                   </span>
                 </div>
+              )}
+              
+              {/* Dark Gradient Overlay - Deeper gradient for better text readability */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-transparent to-black/90" />
+            </div>
 
-                {/* Bio */}
-                {bio && (
-                  <div className="mb-4">
-                    <p className="text-gray-700 leading-relaxed text-sm">{bio}</p>
-                  </div>
-                )}
-
-                {/* Skills */}
-                {skillsArray.length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Briefcase className="w-4 h-4 text-gray-600" />
-                      <span className="text-sm font-semibold text-gray-700">Skills</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {skillsArray.slice(0, 6).map((skill, index) => (
-                        <Badge key={index} variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
-                          {skill}
-                        </Badge>
-                      ))}
-                      {skillsArray.length > 6 && (
-                        <Badge variant="outline" className="text-gray-500">
-                          +{skillsArray.length - 6} more
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
+            {/* Content Overlay */}
+            <div className="absolute bottom-0 left-0 w-[80%] p-6 text-white text-left z-10 flex flex-col gap-2">
+              
+              {/* Name & Age */}
+              <div className="flex items-baseline gap-3">
+                <h2 className="text-3xl font-bold tracking-tight drop-shadow-md">
+                  {firstName} {lastName}
+                </h2>
+                {userAge && (
+                  <span className="text-xl font-medium opacity-90 drop-shadow-sm">
+                    {userAge}
+                  </span>
                 )}
               </div>
-            </div>
-          </CardHeader>
 
-          <CardContent className="pt-0">
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                ref={passButtonRef}
-                onClick={() => handleSendRequest("ignored", _id)}
-                variant="outline"
-                disabled={isLoading}
-                className={`flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-200 ${
-                  showXMarks ? "animate-pulse bg-red-50" : ""
-                }`}
-              >
-                <X className="w-4 h-4 mr-2" />
-                Pass
-              </Button>
-              <Button
+              {/* Gender & Skills Summary */}
+              <div className="flex flex-wrap items-center gap-2 text-sm font-medium opacity-90 mb-1">
+                {gender && (
+                  <span className="capitalize px-2 py-0.5 bg-white/20 backdrop-blur-md rounded-full shadow-sm">
+                    {gender}
+                  </span>
+                )}
+                {skillsArray.slice(0, 3).map((skill, idx) => (
+                   <span key={idx} className="px-2 py-0.5 bg-white/20 backdrop-blur-md rounded-full truncate max-w-[100px] shadow-sm">
+                     {skill}
+                   </span>
+                ))}
+              </div>
+
+              {/* Bio */}
+              {bio && (
+                 <p className="text-sm text-gray-200 line-clamp-2 drop-shadow-sm leading-relaxed">
+                   {bio}
+                 </p>
+              )}
+            </div>
+
+            {/* Right Side Action Buttons */}
+            <div className="absolute bottom-6 right-4 flex flex-col items-center gap-4 z-20">
+              
+              {/* Connect Button */}
+               <Button
                 ref={connectButtonRef}
                 onClick={() => handleSendRequest("interested", _id)}
                 disabled={isLoading}
-                className={`flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 ${
-                  showHearts ? "animate-pulse from-pink-500 to-red-500" : ""
+                className={`w-14 h-14 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 border-none flex items-center justify-center ${
+                    showHearts ? "scale-110 brightness-110" : ""
                 }`}
               >
-                <Heart className="w-4 h-4 mr-2" />
-                Connect
+                <Heart className="w-7 h-7 fill-current" strokeWidth={2.5} />
               </Button>
+
+              {/* Pass Button */}
+              <Button
+                ref={passButtonRef}
+                onClick={() => handleSendRequest("ignored", _id)}
+                disabled={isLoading}
+                className={`w-14 h-14 rounded-full bg-white/90 backdrop-blur-sm text-red-500 shadow-lg hover:bg-white hover:scale-110 active:scale-95 transition-all duration-300 border border-gray-100 flex items-center justify-center ${
+                    showXMarks ? "scale-110 bg-red-50" : ""
+                }`}
+              >
+                <X className="w-7 h-7" strokeWidth={2.5} />
+              </Button>
+
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+
+        {/* Loading State Overlay */}
+        {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
+              <div className="bg-white/90 backdrop-blur-sm p-4 rounded-full shadow-2xl animate-in fade-in zoom-in duration-300">
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            </div>
+        )}
       </div>
     </>
   )
