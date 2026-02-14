@@ -221,7 +221,7 @@ const Chat = () => {
           targetUserId={targetUserId}
           isMobileFullScreen={true}
         />
-        <div className="hidden md:flex flex-1">
+        <div className="hidden md:flex flex-3">
           <EmptyChat 
             onGoConnections={() => navigate("/app/connections")} 
             hasConnections={connectionData && connectionData.length > 0}

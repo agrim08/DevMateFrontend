@@ -3,7 +3,7 @@ import { MessageSquare, Zap, Terminal } from "lucide-react";
 
 const EmptyChat = ({ onGoConnections, hasConnections }) => {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background relative overflow-hidden">
+    <div className="flex-3 flex flex-col items-center justify-center p-8 bg-background relative overflow-hidden">
       {/* Subtle Background Elements */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
       
@@ -20,14 +20,14 @@ const EmptyChat = ({ onGoConnections, hasConnections }) => {
             </div>
         </div>
 
-        <div className="space-y-3">
-          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">
-            {hasConnections ? "System Ready." : "No active nodes."}
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold text-foreground tracking-tight">
+            {hasConnections ? "Select a Conversation" : "No Active Connections"}
           </h2>
-          <p className="text-muted-foreground font-medium text-sm leading-relaxed">
+          <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto">
             {hasConnections 
-              ? "Select a neural link from the sidebar to begin encrypted communication."
-              : <>Your communication encrypted channel is silent. <br /> Find developers to initialize a new link.</>
+              ? "Choose a developer from your network sidebar to start collaborating."
+              : "Your network is empty. Connect with other developers to start chatting."
             }
           </p>
         </div>
@@ -35,12 +35,20 @@ const EmptyChat = ({ onGoConnections, hasConnections }) => {
         {!hasConnections && (
           <Button 
             onClick={onGoConnections}
-            className="h-12 px-10 rounded-2xl bg-primary text-primary-foreground font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.05] transition-all"
+            className="h-11 px-8 rounded-xl bg-primary font-bold text-xs uppercase tracking-wider shadow-lg hover:shadow-primary/25 transition-all"
           >
-            Discover Nodes
+            Find Developers
           </Button>
         )}
       </div>
 
       {/* Terminal Signature */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 opa
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 opacity-20 pointer-events-none">
+          <Terminal className="w-3.5 h-3.5" />
+          <span className="text-[10px] font-black uppercase tracking-[0.3em]">System.Idle</span>
+      </div>
+    </div>
+  );
+};
+
+export default EmptyChat;
