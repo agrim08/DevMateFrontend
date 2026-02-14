@@ -143,8 +143,9 @@ const Chat = () => {
 
     newSocket.on("messageReceived", (message) => {
       // SECURITY: Only process messages relevant to this specific chat node
-      const isFromTarget = message.senderId === targetUserId;
-      const isFromMe = message.senderId === userId;
+      const msgSenderId = typeof message.senderId === 'object' ? message.senderId._id : message.senderId;
+      const isFromTarget = msgSenderId === targetUserId;
+      const isFromMe = msgSenderId === userId;
       
       if (!isFromTarget && !isFromMe) {
           console.warn("Filtered out non-relevant message node");
@@ -152,18 +153,20 @@ const Chat = () => {
       }
 
       const newMessageObj = {
-        senderId: message.senderId,
+        senderId: msgSenderId,
         firstName: message.firstName,
         content: message.content,
         createdAt: message.createdAt,
       };
 
       setMessages((prev) => {
-        const isDuplicate = prev.some(
+        // Check for duplicates in recent messages (last 5)
+        // Relax time check to 5 seconds to account for slight server delays
+        const isDuplicate = prev.slice(-5).some(
           (m) =>
             m.senderId === newMessageObj.senderId &&
             m.content === newMessageObj.content &&
-            Math.abs(new Date(m.createdAt) - new Date(newMessageObj.createdAt)) < 1000
+            Math.abs(new Date(m.createdAt) - new Date(newMessageObj.createdAt)) < 5000
         );
         if (isDuplicate) return prev;
         return [...prev, newMessageObj];

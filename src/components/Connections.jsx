@@ -3,7 +3,7 @@ import { BASE_URL } from "../utils/constants"
 import { useDispatch, useSelector } from "react-redux"
 import { addConnection } from "../utils/connectionSlice"
 import axios from "axios"
-import { MessageSquare, Users, MapPin, Search } from "lucide-react"
+import { MessageSquare, Users, MapPin, Search, ShieldCheck } from "lucide-react"
 import { Link } from "react-router-dom"
 import { Button } from "./ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
@@ -89,7 +89,25 @@ const Connections = () => {
                       </AvatarFallback>
                     </Avatar>
                     <div className="overflow-hidden">
-                        <h3 className="text-lg font-bold text-foreground truncate">{`${firstName} ${lastName}`}</h3>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-foreground truncate">{`${firstName} ${lastName}`}</h3>
+                            {connection.membershipType === "emerald" && (
+                                <div className="group/badge relative">
+                                    <div className="p-0.5 rounded-full">
+                                        <ShieldCheck className="w-4 h-4 text-blue-400 fill-blue-400/10" />
+                                    </div>
+                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-slate-800 text-[10px] text-slate-100 rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">Emerald</span>
+                                </div>
+                            )}
+                            {connection.membershipType === "diamond" && (
+                                <div className="group/badge relative">
+                                    <div className="p-0.5 rounded-full">
+                                        <ShieldCheck className="w-4 h-4 text-amber-400 fill-amber-400/10 animate-pulse" />
+                                    </div>
+                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-amber-900 text-[10px] text-amber-100 rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">Diamond</span>
+                                </div>
+                            )}
+                        </div>
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
                             <MapPin className="w-3 h-3" />
                             <span className="capitalize">{gender || 'Developer'}</span>

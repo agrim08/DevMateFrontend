@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom"
 import "./index.css"
+import { Toaster } from "sonner"
 import Login from "./components/Login"
 import Profile from "./components/Profile"
 import { Provider } from "react-redux"
@@ -25,6 +26,7 @@ function App() {
   return (
     <Provider store={appStore}>
       <AppContent />
+      <Toaster position="top-center" richColors />
     </Provider>
   )
 }
@@ -33,17 +35,26 @@ function AppContent() {
   const dispatch = useDispatch()
   
   useEffect(() => {
+    let isMounted = true;
     const fetchUser = async () => {
       try {
         const res = await axios.get(`${BASE_URL}/profile/view`, {
           withCredentials: true,
         })
-        dispatch(addUser(res.data.data))
+        if (isMounted) {
+          dispatch(addUser(res.data.data))
+        }
       } catch (error) {
-        dispatch(removeUser())
+        console.error("Fetch user failed:", error);
+        if (isMounted) {
+          dispatch(removeUser())
+        }
       }
     }
     fetchUser()
+    return () => {
+      isMounted = false;
+    }
   }, [dispatch])
 
   return (

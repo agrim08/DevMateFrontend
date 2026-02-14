@@ -14,7 +14,27 @@ const UserCard = ({ user }) => {
   const [isLoading, setIsLoading] = useState(false)
 
   if (!user) return null
-  const { _id, firstName, lastName, photoUrl, userAge, gender, bio, skills } = user
+  const { _id, firstName, lastName, photoUrl, userAge, gender, bio, skills, membershipType } = user
+
+  const getBadge = () => {
+    if (membershipType === "emerald") {
+      return (
+        <div className="group/badge relative">
+          <ShieldCheck className="w-6 h-6 text-slate-400 fill-slate-400/10 drop-shadow-md" /> 
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-slate-800 text-xs text-slate-100 rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">Emerald Member</span>
+        </div>
+      )
+    }
+    if (membershipType === "diamond") {
+      return (
+        <div className="group/badge relative">
+          <ShieldCheck className="w-6 h-6 text-amber-400 fill-amber-400/10 drop-shadow-md animate-pulse" />
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-amber-900 text-xs text-amber-100 rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">Diamond Member</span>
+        </div>
+      )
+    }
+    return null
+  }
 
   const handleSendRequest = async (status, userId) => {
     if (isLoading) return
@@ -30,7 +50,14 @@ const UserCard = ({ user }) => {
 
       dispatch(removeUserFromFeed(userId))
     } catch (error) {
-      toast.error("Network synchronization failed")
+      if (error.response && error.response.status === 403) {
+         toast.error(error.response.data.message || "Limit Reached", {
+            position: "bottom-center",
+            className: "bg-destructive/10 border border-destructive/20 text-destructive text-xs font-black uppercase tracking-widest rounded-2xl px-8 py-4 shadow-2xl"
+         })
+      } else {
+         toast.error("Network synchronization failed")
+      }
     } finally {
       setIsLoading(false)
     }
@@ -81,7 +108,7 @@ const UserCard = ({ user }) => {
                 <h2 className="text-3xl font-black text-foreground tracking-tighter">
                     {firstName} <span className="text-primary italic">{lastName}</span>
                 </h2>
-                <ShieldCheck className="w-5 h-5 text-primary opacity-60" />
+                {getBadge()}
             </div>
             <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
                 <div className="flex items-center gap-1.5">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Crown, Check, X, Zap, ShieldCheck, Sparkles, CreditCard, ArrowRight } from "lucide-react"
+import { Crown, Check, X, Zap, ShieldCheck, Sparkles, CreditCard, ArrowRight, CheckCircle2 } from "lucide-react"
 import axios from "axios"
 import { BASE_URL } from "../utils/constants"
 import { Link } from "react-router-dom"
@@ -8,27 +8,14 @@ import { Badge } from "./ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 
+import { useDispatch, useSelector } from "react-redux"
+import { addUser } from "../utils/userSlice"
+
 const Premium = () => {
-  const [isUserPremium, setIsUserPremium] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-
-  const verifyPremiumUser = async () => {
-    try {
-      const res = await axios.get(BASE_URL + "/premium/verify", {
-        withCredentials: true,
-      })
-      if (res.data.isPremium) {
-        setIsUserPremium(true)
-      }
-    } catch (error) {
-      console.error("Error verifying premium status:", error)
-    }
-  }
-
-  useEffect(() => {
-    verifyPremiumUser()
-  }, [])
+  const { data: user } = useSelector((store) => store.user)
+  const dispatch = useDispatch()
 
   useEffect(() => {
     const script = document.createElement("script")
@@ -42,8 +29,13 @@ const Premium = () => {
   }, [])
 
   const handleMembership = async (membershipType) => {
-    if (isUserPremium) {
-      setShowCelebration(true)
+    if (user?.membershipType === membershipType) {
+      toast.success("Active Plan", { description: "You are already subscribed to this plan." })
+      return
+    }
+
+    if (user?.membershipType === "diamond" && membershipType === "emerald") {
+      toast.error("Plan Unavailable", { description: "You are already subscribed to a higher tier plan." })
       return
     }
 
@@ -84,14 +76,23 @@ const Premium = () => {
         },
         handler: async (response) => {
           try {
-            // Verify payment on backend if needed, or just refresh
-            await verifyPremiumUser()
-            setShowCelebration(true)
-            toast.success("Transaction Complete", {
-              description: "Welcome to the elite tier of DevMate."
-            })
+            // Verify payment on backend explicitly
+            const verificationRes = await axios.post(
+              `${BASE_URL}/payment/verify`,
+              response,
+              { withCredentials: true }
+            )
+            
+            if (verificationRes.data.success) {
+               dispatch(addUser(verificationRes.data.data))
+               setShowCelebration(true)
+               toast.success("Transaction Complete", {
+                 description: "Welcome to the elite tier of DevMate."
+               })
+            }
           } catch (e) {
             console.error("Verification error", e)
+            toast.error("Verification Failed", { description: "Payment was successful but verification failed. Please contact support." })
           } finally {
             setIsLoading(false)
           }
@@ -121,7 +122,7 @@ const Premium = () => {
       popular: false,
       description: "Perfect for active developers building their professional circle.",
       features: [
-        { text: "Follow up to 50 users / day", included: true },
+        { text: "Follow up to 20 users / day", included: true },
         { text: "Direct messaging access", included: true },
         { text: "3 months validity", included: true },
         { text: "Premium badge", included: false },
@@ -135,7 +136,7 @@ const Premium = () => {
       popular: true,
       description: "The ultimate experience for engineering leaders and influencers.",
       features: [
-        { text: "Follow up to 100 users / day", included: true },
+        { text: "Follow up to 30 users / day", included: true },
         { text: "Direct messaging access", included: true },
         { text: "Exclusive Premium badge", included: true },
         { text: "24/7 Priority support", included: true },
@@ -261,7 +262,7 @@ const Premium = () => {
 
               <Button
                 onClick={() => handleMembership(plan.name.toLowerCase())}
-                disabled={isLoading}
+                disabled={isLoading || (user?.membershipType === "diamond" && plan.name === "Emerald")}
                 className={`w-full h-14 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95 group/btn overflow-hidden ${
                   plan.popular 
                     ? "bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-[1.02]" 
@@ -273,15 +274,19 @@ const Premium = () => {
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     <span>Processing</span>
                   </div>
-                ) : isUserPremium ? (
+                ) : user?.membershipType === plan.name.toLowerCase() ? (
                   <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4" />
                       <span>Active</span>
                   </div>
+                ) : (user?.membershipType === "diamond" && plan.name === "Emerald") ? (
+                  <div className="flex items-center gap-2 relative opacity-50">
+                    <span>Included in Diamond</span>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2 relative">
                     <CreditCard className="w-4 h-4" />
-                    <span>Select {plan.name}</span>
+                    <span>{user?.membershipType ? 'Upgrade to' : 'Select'} {plan.name}</span>
                     <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover/btn:opacity-100 group-hover/btn:translate-x-0 transition-all" />
                   </div>
                 )}

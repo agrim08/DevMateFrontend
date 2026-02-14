@@ -4,7 +4,7 @@ import { BASE_URL } from "../utils/constants"
 import { useDispatch, useSelector } from "react-redux"
 import { addRequest, removeRequest } from "../utils/requestSlice"
 import { toast } from "sonner"
-import { UserPlus, Check, X, MapPin, Inbox } from "lucide-react"
+import { UserPlus, Check, X, MapPin, Inbox, ShieldCheck } from "lucide-react"
 import { Button } from "./ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Badge } from "./ui/badge"
@@ -85,7 +85,7 @@ const Requests = () => {
         <div className="space-y-4">
           <AnimatePresence>
             {requests.map((request, idx) => {
-                const { firstName, lastName, photoUrl, bio, skills, gender } = request?.fromUserId
+                const { firstName, lastName, photoUrl, bio, skills, gender, membershipType } = request?.fromUserId
                 const skillsArray = typeof skills === "string" ? skills.split(",").map((s) => s.trim()) : skills || []
 
                 return (
@@ -105,7 +105,25 @@ const Requests = () => {
                             </AvatarFallback>
                         </Avatar>
                         <div className="space-y-1">
-                            <h3 className="text-lg font-bold text-foreground leading-none">{`${firstName} ${lastName}`}</h3>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-bold text-foreground leading-none">{`${firstName} ${lastName}`}</h3>
+                                {membershipType === "emerald" && (
+                                    <div className="group/badge relative">
+                                        <div className="p-0.5 bg-slate-100 dark:bg-slate-900 rounded-full">
+                                            <ShieldCheck className="w-4 h-4 text-slate-400 fill-slate-400/10" />
+                                        </div>
+                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-slate-800 text-[10px] text-slate-100 rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">Emerald</span>
+                                    </div>
+                                )}
+                                {membershipType === "diamond" && (
+                                    <div className="group/badge relative">
+                                        <div className="p-0.5 bg-amber-50 rounded-full dark:bg-amber-950/30">
+                                            <ShieldCheck className="w-4 h-4 text-amber-400 fill-amber-400/10 animate-pulse" />
+                                        </div>
+                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-amber-900 text-[10px] text-amber-100 rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">Diamond</span>
+                                    </div>
+                                )}
+                            </div>
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
                                 <MapPin className="w-3 h-3" />
                                 <span className="capitalize">{gender || 'Developer'}</span>
