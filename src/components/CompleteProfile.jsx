@@ -166,7 +166,6 @@ const CompleteProfile = () => {
         className="w-full max-w-2xl relative z-10"
       >
         <Card className="bg-card/40 backdrop-blur-2xl border-border/40 rounded-[2.5rem] shadow-2xl p-2 sm:p-6 overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-8 opacity-20"><Fingerprint className="w-24 h-24" /></div>
           
           <CardHeader className="text-center space-y-4 pb-8 relative z-10">
             <div className="inline-flex items-center justify-center gap-3 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
