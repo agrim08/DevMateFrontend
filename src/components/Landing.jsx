@@ -21,7 +21,7 @@ import { Badge } from "./ui/badge"
 
 const Landing = () => {
   const navigate = useNavigate()
-  const user = useSelector((store) => store.user)
+  const { data: user } = useSelector((store) => store.user)
   const [isVisible, setIsVisible] = useState({})
 
   useEffect(() => {

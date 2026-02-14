@@ -15,12 +15,40 @@ import Landing from "./components/Landing"
 import ProtectedRoute from "./components/ProtectedRoute"
 import AuthRoute from "./components/AuthRoute"
 import VerifyEmail from "./components/VerifyEmail"
+import axios from "axios"
+import { BASE_URL } from "./utils/constants"
+import { useDispatch, useSelector } from "react-redux"
+import { addUser, removeUser } from "./utils/userSlice"
+import { useEffect } from "react"
 
 function App() {
   return (
     <Provider store={appStore}>
-      <BrowserRouter basename="/">
-        <Routes>
+      <AppContent />
+    </Provider>
+  )
+}
+
+function AppContent() {
+  const dispatch = useDispatch()
+  
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/profile/view`, {
+          withCredentials: true,
+        })
+        dispatch(addUser(res.data.data))
+      } catch (error) {
+        dispatch(removeUser())
+      }
+    }
+    fetchUser()
+  }, [dispatch])
+
+  return (
+    <BrowserRouter basename="/">
+      <Routes>
           {/* Public routes */}
           <Route path="/" element={<Landing />} />
           <Route path="/landing" element={<Landing />} />
@@ -48,7 +76,6 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-    </Provider>
   )
 }
 

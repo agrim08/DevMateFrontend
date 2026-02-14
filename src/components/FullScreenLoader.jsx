@@ -1,11 +1,14 @@
-import { Loader2 } from "lucide-react"
+import { Terminal, Loader2 } from "lucide-react"
+import { motion } from "framer-motion"
 
-const FullScreenLoader = ({ message }) => {
+const FullScreenLoader = ({ message = "Loading content..." }) => {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-        <p className="text-gray-600 text-lg">{message}</p>
+    <div className="fixed inset-0 bg-background z-[100] flex items-center justify-center">
+      <div className="text-center space-y-4">
+        <div className="relative inline-block">
+            <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto" />
+        </div>
+        <p className="text-muted-foreground font-medium text-sm tracking-tight">{message}</p>
       </div>
     </div>
   )

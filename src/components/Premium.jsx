@@ -1,48 +1,23 @@
 import { useState, useEffect } from "react"
-import { Crown, Users, Check, X, Clock, MessageCircle, PartyPopper, Sparkles, Star, Zap } from "lucide-react"
+import { Crown, Check, X, Zap, ShieldCheck, Sparkles, CreditCard, ArrowRight } from "lucide-react"
 import axios from "axios"
 import { BASE_URL } from "../utils/constants"
 import { Link } from "react-router-dom"
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
-import { Alert, AlertDescription } from "./ui/alert"
+import { motion, AnimatePresence } from "framer-motion"
+import { toast } from "sonner"
 
 const Premium = () => {
   const [isUserPremium, setIsUserPremium] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    verifyPremiumUser()
-  }, [])
-
-  useEffect(() => {
-    // Dynamically load Razorpay script
-    const script = document.createElement("script")
-    script.src = "https://checkout.razorpay.com/v1/checkout.js"
-    script.async = true
-    document.body.appendChild(script)
-
-    script.onload = () => {
-      console.log("Razorpay script loaded successfully.")
-    }
-
-    script.onerror = () => {
-      console.error("Failed to load Razorpay script.")
-    }
-
-    return () => {
-      document.body.removeChild(script)
-    }
-  }, [])
-
   const verifyPremiumUser = async () => {
     try {
       const res = await axios.get(BASE_URL + "/premium/verify", {
         withCredentials: true,
       })
-
       if (res.data.isPremium) {
         setIsUserPremium(true)
       }
@@ -51,15 +26,35 @@ const Premium = () => {
     }
   }
 
+  useEffect(() => {
+    verifyPremiumUser()
+  }, [])
+
+  useEffect(() => {
+    const script = document.createElement("script")
+    script.src = "https://checkout.razorpay.com/v1/checkout.js"
+    script.async = true
+    script.onload = () => console.log("Razorpay script loaded")
+    document.body.appendChild(script)
+    return () => {
+      document.body.removeChild(script)
+    }
+  }, [])
+
   const handleMembership = async (membershipType) => {
     if (isUserPremium) {
       setShowCelebration(true)
-      setTimeout(() => setShowCelebration(false), 5000)
+      return
+    }
+
+    if (typeof window.Razorpay === "undefined") {
+      toast.error("Bridge Unavailable", {
+        description: "Payment system is still initializing. Please wait a second and try again."
+      })
       return
     }
 
     setIsLoading(true)
-
     try {
       const response = await axios.post(
         `${BASE_URL}/payment/create-order`,
@@ -67,39 +62,53 @@ const Premium = () => {
         { withCredentials: true },
       )
 
-      const { amount, currency, keyId, orderId, notes } = response.data
+      const { amount, currency, keyId, orderId, notes } = response.data.data
 
-      if (typeof window.Razorpay !== "undefined") {
-        const options = {
-          key: keyId,
-          amount,
-          currency,
-          name: "DevMate",
-          description: "Connect to like-minded developers",
-          order_id: orderId,
-          prefill: {
-            name: `${notes?.firstName} ${notes?.lastName}`,
-            email: notes?.emailId,
-            contact: "9999999999",
-          },
-          theme: {
-            color: membershipType === "diamond" ? "#3B82F6" : "#10B981",
-          },
-          handler: () => {
-            verifyPremiumUser()
+      const options = {
+        key: keyId,
+        amount,
+        currency,
+        name: "DevMate Premium",
+        description: `Upgrading to ${membershipType.toUpperCase()} tier`,
+        order_id: orderId,
+        prefill: {
+          name: notes?.firstName ? `${notes.firstName} ${notes.lastName || ''}` : "Developer",
+          email: notes?.emailId || "",
+        },
+        theme: { 
+          color: "#3b82f6", // DevMate Primary Blue
+          backdrop_color: "#020617" 
+        },
+        modal: {
+          ondismiss: () => setIsLoading(false)
+        },
+        handler: async (response) => {
+          try {
+            // Verify payment on backend if needed, or just refresh
+            await verifyPremiumUser()
             setShowCelebration(true)
-            setTimeout(() => setShowCelebration(false), 5000)
-          },
-        }
-
-        const rzp = new window.Razorpay(options)
-        rzp.open()
-      } else {
-        console.error("Razorpay SDK not loaded.")
+            toast.success("Transaction Complete", {
+              description: "Welcome to the elite tier of DevMate."
+            })
+          } catch (e) {
+            console.error("Verification error", e)
+          } finally {
+            setIsLoading(false)
+          }
+        },
       }
+      
+      const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', function (response) {
+          toast.error("Payment Failed", { description: response.error.description })
+          setIsLoading(false)
+      })
+      rzp.open()
     } catch (error) {
-      console.error("Error during membership handling:", error)
-    } finally {
+      console.error("Order creation error:", error)
+      toast.error("Order Initialization Failed", {
+        description: error.response?.data || "Could not connect to payment server."
+      })
       setIsLoading(false)
     }
   }
@@ -109,184 +118,189 @@ const Premium = () => {
       name: "Emerald",
       price: "₹300",
       duration: "3 months",
-      color: "emerald",
       popular: false,
+      description: "Perfect for active developers building their professional circle.",
       features: [
-        { icon: Users, text: "Follow up to 50 users per day", included: true },
-        { icon: MessageCircle, text: "Chat with other developers", included: true },
-        { icon: Clock, text: "3 months validity", included: true },
-        { icon: Crown, text: "Premium badge", included: false },
-        { icon: Zap, text: "Priority support", included: false },
+        { text: "Follow up to 50 users / day", included: true },
+        { text: "Direct messaging access", included: true },
+        { text: "3 months validity", included: true },
+        { text: "Premium badge", included: false },
+        { text: "Priority support", included: false },
       ],
     },
     {
       name: "Diamond",
       price: "₹1200",
       duration: "6 months",
-      color: "blue",
       popular: true,
+      description: "The ultimate experience for engineering leaders and influencers.",
       features: [
-        { icon: Users, text: "Follow up to 100 users per day", included: true },
-        { icon: MessageCircle, text: "Chat with other developers", included: true },
-        { icon: Crown, text: "Premium badge", included: true },
-        { icon: Zap, text: "Priority support", included: true },
-        { icon: Clock, text: "6 months validity", included: true },
+        { text: "Follow up to 100 users / day", included: true },
+        { text: "Direct messaging access", included: true },
+        { text: "Exclusive Premium badge", included: true },
+        { text: "24/7 Priority support", included: true },
+        { text: "6 months validity", included: true },
       ],
     },
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8 relative">
+    <div className="min-h-screen bg-background pt-16 pb-24 px-4 overflow-hidden relative">
+      {/* Dynamic Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-600/5 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-600/5 blur-[120px] rounded-full animate-pulse delay-700" />
+      </div>
+      
       {/* Celebration Modal */}
-      {showCelebration && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform animate-in zoom-in-95 duration-300">
-            <div className="p-8 text-center">
-              <div className="flex justify-center gap-4 mb-6">
-                <PartyPopper className="w-12 h-12 text-yellow-500 animate-bounce" />
-                <Crown className="w-12 h-12 text-blue-500 animate-bounce [animation-delay:0.2s]" />
-                <PartyPopper className="w-12 h-12 text-yellow-500 animate-bounce [animation-delay:0.4s]" />
+      <AnimatePresence>
+        {showCelebration && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-background/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="max-w-md w-full bg-card border border-primary/20 p-10 rounded-[2.5rem] shadow-2xl text-center space-y-8 relative overflow-hidden"
+            >
+              <div className="absolute -top-10 -left-10 w-32 h-32 bg-primary/10 blur-3xl rounded-full" />
+              
+              <div className="relative inline-flex flex-col items-center">
+                <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center mb-4">
+                  <Sparkles className="w-10 h-10 text-primary animate-pulse" />
+                </div>
+                <h2 className="text-4xl font-black text-foreground tracking-tighter">Elite Member</h2>
+                <div className="h-1 w-12 bg-primary mt-2 rounded-full" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">You're Already Premium! 🎉</h2>
-              <div className="relative mb-6">
-                <p className="text-gray-600 leading-relaxed">
-                  You're already enjoying all the exclusive benefits of our premium membership. Thank you for being an
-                  amazing premium member!
-                </p>
-                <Sparkles className="absolute -right-2 -top-2 text-yellow-400 animate-pulse w-6 h-6" />
-                <Sparkles className="absolute -left-2 -bottom-2 text-yellow-400 animate-pulse w-6 h-6" />
-              </div>
+              
+              <p className="text-muted-foreground font-medium leading-relaxed">
+                Your account has been successfully upgraded. You now have unrestricted access to the most powerful networking features on DevMate.
+              </p>
+
               <div className="space-y-3">
-                <Button
-                  asChild
-                  className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-semibold"
-                >
-                  <Link to="/app">Continue to Dashboard</Link>
+                <Button asChild className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-xs bg-primary text-primary-foreground shadow-xl shadow-primary/20">
+                  <Link to="/app">Enter Workspace</Link>
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCelebration(false)}
-                  className="w-full h-12 border-gray-200 hover:bg-gray-50 font-semibold"
-                >
-                  Close
-                </Button>
+                <button onClick={() => setShowCelebration(false)} className="text-muted-foreground text-xs font-black uppercase tracking-widest hover:text-foreground transition-colors py-2">
+                  Dismiss
+                </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto relative z-10">
         {/* Header */}
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Crown className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Choose Your Plan</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Unlock premium features and supercharge your developer networking experience
-          </p>
+        <div className="text-center space-y-6 mb-16">
+            <h1 className="text-4xl font-black text-foreground tracking-tight md:text-5xl leading-[1.1]">
+                Supercharge your <br />
+                <span className="text-primary italic">Network</span>.
+            </h1>
+            <p className="text-muted-foreground font-medium max-w-xl mx-auto text-lg leading-relaxed">
+                Unlock high-frequency networking, direct communication channels, and exclusive identity badges.
+            </p>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {plans.map((plan) => (
-            <Card
+        {/* Pricing Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch px-4">
+          {plans.map((plan, idx) => (
+            <motion.div
               key={plan.name}
-              className={`relative shadow-lg hover:shadow-xl transition-all duration-300 border-0 ${
-                plan.popular ? "ring-2 ring-blue-500 scale-105" : ""
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              className={`relative flex flex-col p-10 rounded-[2.5rem] border transition-all duration-500 bg-card/50 backdrop-blur-sm group ${
+                plan.popular 
+                  ? "border-primary/50 shadow-2xl shadow-primary/10 ring-1 ring-primary/20" 
+                  : "border-border hover:border-primary/30"
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-blue-500 hover:bg-blue-500 text-white px-4 py-1 text-sm font-semibold">
-                    <Star className="w-4 h-4 mr-1" />
-                    Most Popular
-                  </Badge>
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                   <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-full uppercase tracking-widest text-[10px] shadow-lg">
+                      Recommended
+                   </Badge>
                 </div>
               )}
 
-              <CardHeader className="text-center pb-4">
-                <div className="flex items-center justify-center mb-4">
-                  <div
-                    className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-md ${
-                      plan.color === "emerald"
-                        ? "bg-gradient-to-br from-emerald-500 to-emerald-600"
-                        : "bg-gradient-to-br from-blue-500 to-blue-600"
-                    }`}
-                  >
-                    <Crown className="w-8 h-8 text-white" />
-                  </div>
+              <div className="mb-8 space-y-3">
+                <div className="flex items-center gap-3">
+                    <h3 className="text-2xl font-black text-foreground tracking-tight">
+                        {plan.name}
+                    </h3>
+                    {plan.name === 'Diamond' ? <Crown className="w-6 h-6 text-primary fill-current" /> : <ShieldCheck className="w-6 h-6 text-primary" />}
                 </div>
-                <CardTitle className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</CardTitle>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
-                  <span className="text-gray-600 ml-2">/ {plan.duration}</span>
-                </div>
-                <p className="text-gray-600">
-                  Perfect for {plan.name === "Emerald" ? "getting started" : "power users"}
+                <p className="text-muted-foreground font-medium text-sm leading-relaxed">
+                    {plan.description}
                 </p>
-              </CardHeader>
+              </div>
 
-              <CardContent className="space-y-6">
-                {/* Features */}
-                <div className="space-y-4">
-                  {plan.features.map((feature, index) => (
-                    <div key={index} className="flex items-center">
-                      {feature.included ? (
-                        <Check
-                          className={`h-5 w-5 mr-3 ${plan.color === "emerald" ? "text-emerald-500" : "text-blue-500"}`}
-                        />
-                      ) : (
-                        <X className="h-5 w-5 mr-3 text-gray-400" />
-                      )}
-                      <feature.icon
-                        className={`h-4 w-4 mr-2 ${feature.included ? "text-gray-700" : "text-gray-400"}`}
-                      />
-                      <span className={feature.included ? "text-gray-700" : "text-gray-400"}>{feature.text}</span>
-                    </div>
-                  ))}
+              <div className="mb-12">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-black text-foreground tracking-tighter">{plan.price}</span>
+                  <span className="text-muted-foreground font-black text-xs uppercase tracking-widest">/ {plan.duration}</span>
                 </div>
+              </div>
 
-                {/* CTA Button */}
-                <Button
-                  onClick={() => handleMembership(plan.name.toLowerCase())}
-                  disabled={isLoading}
-                  className={`w-full h-12 font-semibold text-white shadow-md hover:shadow-lg transition-all ${
-                    plan.color === "emerald"
-                      ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
-                      : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                  }`}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Processing...</span>
+              <div className="space-y-5 mb-14 flex-1">
+                {plan.features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-4">
+                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 border ${feature.included ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-muted/50 border-border/50 text-muted-foreground/30'}`}>
+                        {feature.included ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
                     </div>
-                  ) : isUserPremium ? (
-                    "Already Premium"
-                  ) : (
-                    <>
-                      <Crown className="w-4 h-4 mr-2" />
-                      Get {plan.name}
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+                    <span className={`text-sm font-bold tracking-tight ${feature.included ? 'text-foreground' : 'text-muted-foreground/40'}`}>
+                        {feature.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                onClick={() => handleMembership(plan.name.toLowerCase())}
+                disabled={isLoading}
+                className={`w-full h-14 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95 group/btn overflow-hidden ${
+                  plan.popular 
+                    ? "bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-[1.02]" 
+                    : "bg-muted text-foreground hover:bg-muted-foreground/10"
+                }`}
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    <span>Processing</span>
+                  </div>
+                ) : isUserPremium ? (
+                  <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Active</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 relative">
+                    <CreditCard className="w-4 h-4" />
+                    <span>Select {plan.name}</span>
+                    <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover/btn:opacity-100 group-hover/btn:translate-x-0 transition-all" />
+                  </div>
+                )}
+              </Button>
+            </motion.div>
           ))}
         </div>
 
-        {/* Additional Info */}
-        <Alert className="bg-blue-50 border-blue-200">
-          <Sparkles className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
-            All plans include basic features like profile customization, messaging, and access to our developer
-            community. Upgrade anytime to unlock more powerful networking tools.
-          </AlertDescription>
-        </Alert>
+        {/* Footer info */}
+        <div className="mt-24 text-center space-y-6">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em]">
+                Secure Payment Powered by Razorpay
+            </p>
+            <div className="flex items-center justify-center gap-8 opacity-30 grayscale hover:grayscale-0 transition-all">
+                <div className="w-12 h-12 rounded-xl bg-muted" />
+                <div className="w-12 h-12 rounded-xl bg-muted" />
+                <div className="w-12 h-12 rounded-xl bg-muted" />
+            </div>
+        </div>
       </div>
     </div>
   )

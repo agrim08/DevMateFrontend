@@ -4,9 +4,11 @@ import { useDispatch, useSelector } from "react-redux"
 import { addFeed } from "../utils/feedSlice"
 import { useEffect } from "react"
 import UserCard from "./UserCard"
-import { Users, UserPlus, Sparkles } from "lucide-react"
+import { Users, Search, RefreshCw } from "lucide-react"
 import FullScreenLoader from "./FullScreenLoader"
 import EmptyState from "./EmptyState"
+import { motion } from "framer-motion"
+import { Button } from "./ui/button"
 
 const Feed = () => {
   const dispatch = useDispatch()
@@ -19,8 +21,7 @@ const Feed = () => {
       })
       dispatch(addFeed(res?.data?.data))
     } catch (error) {
-      console.error(error.message)
-      return
+      console.error("Feed error:", error.message)
     }
   }
 
@@ -29,46 +30,57 @@ const Feed = () => {
   }, [])
 
   if (!feed) {
-    return <FullScreenLoader message="Discovering amazing developers..." />
+    return <FullScreenLoader message="Scanning for top developers..." />
   }
 
   if (feed.length === 0) {
     return (
       <EmptyState
-        icon={Users}
-        title="No New Connections"
-        description="You've seen all available profiles for now. Check back later for new developers to connect with!"
+        icon={Search}
+        title="No developers found"
+        description="We've swept through the network but couldn't find any more developers in your area for now."
       >
-        <div className="flex items-center justify-center gap-2 text-blue-600">
-          <Sparkles className="w-5 h-5" />
-          <span className="text-sm font-medium">More profiles coming soon</span>
-        </div>
+        <Button 
+          variant="outline" 
+          onClick={getFeed}
+          className="mt-4 gap-2 rounded-full px-6"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Refetch Pipeline
+        </Button>
       </EmptyState>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Discover Developers</h1>
-          <p className="text-gray-600">Connect with amazing developers from around the world</p>
-        </div>
+    <div className="min-h-[calc(100vh-64px)] bg-background flex flex-col items-center">
+      {/* Search Header */}
+      <div className="w-full max-w-2xl px-4 pt-12 text-center space-y-4">
+        <motion.div
+           initial={{ opacity: 0, y: -10 }}
+           animate={{ opacity: 1, y: 0 }}
+           className="space-y-2"
+        >
+          <h1 className="text-3xl font-black text-foreground tracking-tight">
+            Discover People
+          </h1>
+          <p className="text-muted-foreground font-medium max-w-sm mx-auto">
+            Connect with technical founders and software engineers building the next big thing.
+          </p>
+        </motion.div>
+      </div>
 
-        {/* User Card */}
-        <div className="flex justify-center">
-          <UserCard user={feed[0]} />
-        </div>
-
-        {/* Stats */}
-        <div className="mt-8 text-center">
-          <div className="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm border">
-            <UserPlus className="w-4 h-4 text-blue-600" />
-            <span className="text-sm text-gray-600">
-              {feed.length} profile{feed.length !== 1 ? "s" : ""} remaining
-            </span>
-          </div>
+      {/* Main Discover Card */}
+      <div className="flex-1 flex items-center justify-center w-full p-4">
+        <div className="relative w-full max-w-md">
+           <UserCard user={feed[0]} />
+           
+           {/* Card count indicator - very subtle */}
+           <div className="mt-8 text-center">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
+                {feed.length} profiles available in queue
+              </span>
+           </div>
         </div>
       </div>
     </div>

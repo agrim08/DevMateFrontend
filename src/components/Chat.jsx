@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 
 import { createSocketConnection } from "../utils/socket";
@@ -8,6 +9,7 @@ import { BASE_URL } from "../utils/constants";
 import { addConnection } from "../utils/connectionSlice";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
+import { AlertCircle, ChevronLeft } from "lucide-react";
 
 // Subcomponents
 import ChatSidebar from "./chat/ChatSidebar";
@@ -35,7 +37,7 @@ const Chat = () => {
   const inputRef = useRef(null);
 
   const connectionData = useSelector((store) => store.connection);
-  const user = useSelector((store) => store.user);
+  const { data: user } = useSelector((store) => store.user);
   const userId = user?._id;
 
   const targetConnection = connectionData?.find((c) => c?._id === targetUserId);
@@ -72,24 +74,44 @@ const Chat = () => {
   // ===== Effects: initial scroll =====
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // ===== Fetch Connections if missing =====
+  const fetchConnections = async () => {
+    if (connectionData) return;
+    try {
+      const res = await axios.get(`${BASE_URL}/user/connections`, { withCredentials: true });
+      dispatch(addConnection(res?.data?.data));
+    } catch (error) {
+      console.error("Failed to load nodes:", error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchConnections();
   }, []);
 
   // ===== Fetch chat history =====
   const fetchChat = async () => {
     if (!targetUserId) return;
     try {
+      setMessages([]); // Clear messages while loading new chat
       const response = await axios.get(`${BASE_URL}/chat/${targetUserId}`, { withCredentials: true });
-      const chatMessages = response?.data?.messages.map((msg) => ({
-        senderId: msg.senderId._id,
-        firstName: msg.senderId.firstName,
-        lastName: msg.senderId.lastName,
-        content: msg.content,
-        createdAt: msg.createdAt,
-      }));
-      setMessages(chatMessages || []);
+      
+      const chatData = response?.data?.data;
+      if (chatData?.messages) {
+        const chatMessages = chatData.messages.map((msg) => ({
+          senderId: typeof msg.senderId === 'object' ? msg.senderId._id : msg.senderId,
+          firstName: typeof msg.senderId === 'object' ? msg.senderId.firstName : msg.firstName,
+          lastName: typeof msg.senderId === 'object' ? msg.senderId.lastName : msg.lastName,
+          content: msg.content,
+          createdAt: msg.createdAt,
+        }));
+        setMessages(chatMessages);
+      }
       setError(null);
     } catch (err) {
-      setError("Failed to load chat history. Please try again.");
+      setError("Cloud synchronization failed. Retrying...");
       console.error("Error fetching chat:", err?.message);
     }
   };
@@ -98,43 +120,44 @@ const Chat = () => {
 
   // ===== Socket lifecycle =====
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !targetUserId) return;
+    
     const newSocket = createSocketConnection();
 
     newSocket.on("connect", () => {
       setConnectionStatus("connected");
       setError(null);
-      if (targetUserId) {
-        newSocket.emit("joinChat", { firstName: user.firstName, userId, targetUserId });
-      }
+      newSocket.emit("joinChat", { firstName: user.firstName, userId, targetUserId });
     });
 
     newSocket.on("connect_error", (err) => {
       setConnectionStatus("disconnected");
-      setError("Connection failed. Please check your network.");
       console.error("Socket connection error:", err?.message);
     });
 
     newSocket.on("reconnect", () => {
       setConnectionStatus("connected");
       setError(null);
-      if (targetUserId) {
-        newSocket.emit("joinChat", { firstName: user.firstName, userId, targetUserId });
-      }
-    });
-
-    newSocket.on("error", ({ message }) => {
-      setError(message);
-      console.error("Socket error from server:", message);
+      newSocket.emit("joinChat", { firstName: user.firstName, userId, targetUserId });
     });
 
     newSocket.on("messageReceived", (message) => {
+      // SECURITY: Only process messages relevant to this specific chat node
+      const isFromTarget = message.senderId === targetUserId;
+      const isFromMe = message.senderId === userId;
+      
+      if (!isFromTarget && !isFromMe) {
+          console.warn("Filtered out non-relevant message node");
+          return;
+      }
+
       const newMessageObj = {
         senderId: message.senderId,
         firstName: message.firstName,
         content: message.content,
         createdAt: message.createdAt,
       };
+
       setMessages((prev) => {
         const isDuplicate = prev.some(
           (m) =>
@@ -145,10 +168,10 @@ const Chat = () => {
         if (isDuplicate) return prev;
         return [...prev, newMessageObj];
       });
-      setError(null);
     });
 
     setSocket(newSocket);
+
     return () => {
       newSocket.off("connect");
       newSocket.off("connect_error");
@@ -158,21 +181,6 @@ const Chat = () => {
       newSocket.disconnect();
     };
   }, [userId, targetUserId]);
-
-  // ===== Load connections if empty =====
-  useEffect(() => {
-    const handleConnections = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/user/connections`, { withCredentials: true });
-        dispatch(addConnection(res?.data?.data));
-        setError(null);
-      } catch (err) {
-        setError("Failed to load connections. Please try again.");
-        console.error("Error fetching connections:", err?.response?.data);
-      }
-    };
-    if (!connectionData || connectionData?.length === 0) handleConnections();
-  }, [dispatch, connectionData]);
 
   // ===== Actions =====
   const sendMessage = async (e) => {
@@ -186,41 +194,24 @@ const Chat = () => {
       createdAt: new Date().toISOString(),
     };
 
-    setMessages((prev) => [...prev, message]); // optimistic
+    setMessages((prev) => [...prev, message]);
 
     try {
       socket.emit("sendMessage", { firstName: user.firstName, userId, targetUserId, content: newMessage.trim() });
       setNewMessage("");
       inputRef.current?.focus();
-      setError(null);
     } catch (err) {
-      setError("Failed to send message. Please try again.");
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.createdAt === message.createdAt && m.status === "sending"
-            ? { ...m, status: "failed" }
-            : m
-        )
-      );
       console.error("Send message error:", err?.message);
     }
-  };
-
-  const retryMessage = (failedMessage) => {
-    setMessages((prev) =>
-      prev.map((m) => (m.createdAt === failedMessage.createdAt ? { ...m, status: "sending" } : m))
-    );
-    socket.emit("sendMessage", { firstName: user.firstName, userId, targetUserId, content: failedMessage.content });
   };
 
   const handleTyping = () => {
     if (socket && targetUserId) socket.emit("typing", { userId, targetUserId });
   };
 
-  // ===== Conditional branches =====
   if (!targetUserId) {
     return (
-      <div className="h-screen bg-gray-50 flex overflow-hidden">
+      <div className="h-[calc(100vh-64px)] bg-background flex overflow-hidden">
         <ChatSidebar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -228,23 +219,37 @@ const Chat = () => {
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           targetUserId={targetUserId}
+          isMobileFullScreen={true}
         />
-        <EmptyChat onGoConnections={() => navigate("/app/connections")} />
+        <div className="hidden md:flex flex-1">
+          <EmptyChat 
+            onGoConnections={() => navigate("/app/connections")} 
+            hasConnections={connectionData && connectionData.length > 0}
+          />
+        </div>
       </div>
     );
   }
 
   if (!targetConnection) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="p-8 text-center">
-          <CardContent>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">User not found</h2>
-            <p className="text-gray-600 mb-4">
-              The user you're trying to chat with doesn't exist or isn't connected.
-            </p>
-            <Button asChild>
-              <Link to="/app/chat">Back to Messages</Link>
+      <div className="h-[calc(100vh-64px)] bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-8 text-center border-border/50 bg-card rounded-[2rem] shadow-2xl">
+          <CardContent className="space-y-6">
+            <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-2xl flex items-center justify-center mx-auto">
+                <AlertCircle className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+                <h2 className="text-2xl font-black text-foreground">Node Connection Lost</h2>
+                <p className="text-muted-foreground font-medium">
+                  The developer you're trying to reach is currently unreachable or the connection link is invalid.
+                </p>
+            </div>
+            <Button asChild className="w-full h-12 rounded-xl font-bold bg-primary hover:bg-primary/90">
+              <Link to="/app/chat" className="flex items-center justify-center gap-2">
+                <ChevronLeft className="w-4 h-4" />
+                <span>Return to Network</span>
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -255,7 +260,7 @@ const Chat = () => {
   const messageGroups = groupMessagesByDate(messages);
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-[calc(100vh-64px)] bg-background flex overflow-hidden">
       <ChatSidebar
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -265,45 +270,41 @@ const Chat = () => {
         targetUserId={targetUserId}
       />
 
-      <div className="flex-1 flex flex-col bg-white min-h-0">
-        <ChatHeader
-          targetConnection={targetConnection}
-          navigate={navigate}
-          setSidebarOpen={setSidebarOpen}
-        />
+      <div className="flex-1 flex flex-col bg-background/20 backdrop-blur-md min-h-0 border-l border-border/40 relative">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={targetUserId}
+            initial={{ opacity: 0, scale: 0.99 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.99 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="flex-1 flex flex-col min-h-0"
+          >
+            <ChatHeader
+              targetConnection={targetConnection}
+              navigate={navigate}
+              setSidebarOpen={setSidebarOpen}
+            />
 
-        {error && (
-          <div className="p-4 bg-red-100 text-red-700 text-sm text-center">
-            {error}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-2 text-red-700 underline"
-              onClick={() => { setError(null); fetchChat(); }}
-            >
-              Retry
-            </Button>
-          </div>
-        )}
+            <ChatMessages
+              messageGroups={messageGroups}
+              userId={userId}
+              targetConnection={targetConnection}
+              isTyping={isTyping}
+              messagesEndRef={messagesEndRef}
+              formatTime={formatTime}
+            />
 
-        <ChatMessages
-          messageGroups={messageGroups}
-          userId={userId}
-          targetConnection={targetConnection}
-          retryMessage={retryMessage}
-          isTyping={isTyping}
-          messagesEndRef={messagesEndRef}
-          formatTime={formatTime}
-        />
-
-        <ChatInput
-          newMessage={newMessage}
-          setNewMessage={setNewMessage}
-          sendMessage={sendMessage}
-          handleTyping={handleTyping}
-          inputRef={inputRef}
-          connectionStatus={connectionStatus}
-        />
+            <ChatInput
+              newMessage={newMessage}
+              setNewMessage={setNewMessage}
+              sendMessage={sendMessage}
+              handleTyping={handleTyping}
+              inputRef={inputRef}
+              connectionStatus={connectionStatus}
+            />
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

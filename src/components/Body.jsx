@@ -1,56 +1,58 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import Navbar from "./Navbar"
+import Sidebar from "./Sidebar"
 import { Outlet, useNavigate, useLocation } from "react-router-dom"
 import Footer from "./Footer"
-import { BASE_URL } from "../utils/constants"
-import axios from "axios"
 import { useDispatch, useSelector } from "react-redux"
-import { addUser } from "../utils/userSlice"
 
 const Body = () => {
   const navigate = useNavigate()
-  const dispatch = useDispatch()
   const location = useLocation()
-  const user = useSelector((store) => store.user)
-
-  const getUser = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/profile/view`, {
-        withCredentials: true,
-      })
-      dispatch(addUser(res.data))
-    } catch (error) {
-      if (error.response?.status === 401) {
-        navigate("/login")
-      }
-      console.log(error.message)
-    }
-  }
-
-  useEffect(() => {
-    if (!user) {
-      getUser()
-    }
-  }, [user])
+  const { data: user } = useSelector((store) => store.user)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     if (
       user &&
       !user.isProfileComplete &&
       location.pathname !== "/app/complete-profile" &&
-      location.pathname !== "/login"
+      location.pathname !== "/login" &&
+      location.pathname !== "/"
     ) {
       navigate("/app/complete-profile")
     }
   }, [user, navigate, location.pathname])
 
+  const showSidebar = user && location.pathname !== "/app/complete-profile" && location.pathname !== "/login" && location.pathname !== "/"
+
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
-      <main className="flex-1 w-full">
-        <Outlet />
-      </main>
-      <Footer />
+    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/20 transition-colors duration-300">
+      <Navbar setIsMobileMenuOpen={setIsMobileMenuOpen} />
+      
+      <div className="flex flex-1 relative">
+        {showSidebar && (
+          <Sidebar 
+            isCollapsed={isSidebarCollapsed} 
+            setIsCollapsed={setIsSidebarCollapsed} 
+            isMobileMenuOpen={isMobileMenuOpen}
+            setIsMobileMenuOpen={setIsMobileMenuOpen}
+          />
+        )}
+        
+        <main className={`flex-1 w-full transition-all duration-300 ${
+          showSidebar 
+            ? isSidebarCollapsed 
+              ? "md:pl-[80px]" 
+              : "md:pl-[260px]" 
+            : ""
+        }`}>
+          <div className="min-h-[calc(100vh-64px-100px)]">
+             <Outlet />
+          </div>
+          <Footer />
+        </main>
+      </div>
     </div>
   )
 }

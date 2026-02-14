@@ -1,337 +1,167 @@
-import React, { useEffect } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import { BASE_URL } from "../utils/constants"
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { useSelector, useDispatch } from "react-redux"
 import axios from "axios"
+import { BASE_URL } from "../utils/constants"
 import { removeUser } from "../utils/userSlice"
-import { addRequest } from "../utils/requestSlice"
-import { Menu, User, LogOut, Heart, MessageCircle, Users, Clock, Crown, Globe } from "lucide-react"
-
-import { Button } from "./ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { 
+  LogOut, 
+  User, 
+  Settings,
+  Code2,
+  Search,
+  ChevronDown,
+  Crown,
+  Sparkles,
+  Menu
+} from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "./ui/alert-dialog"
-import { Badge } from "./ui/badge"
+import { Button } from "./ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 
-const Navbar = () => {
-  const navigate = useNavigate()
+const Navbar = ({ setIsMobileMenuOpen }) => {
+  const user = useSelector((store) => store.user.data)
   const dispatch = useDispatch()
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
-  const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false)
-
-  const user = useSelector((store) => store.user)
-  const requests = useSelector((store) => store.request)
-  const requestCount = requests?.length || 0
-
-  // Fetch pending requests
-  const fetchRequests = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/user/requests/pending`, {
-        withCredentials: true,
-      })
-      dispatch(addRequest(res?.data?.data || []))
-    } catch (error) {
-      console.error("Error fetching requests:", error)
-    }
-  }
-
-  useEffect(() => {
-    if (user) {
-      fetchRequests()
-    }
-  }, [user])
-
-  const handleLogoutClick = () => {
-    setShowLogoutConfirm(true)
-  }
+  const navigate = useNavigate()
+  const [searchQuery, setSearchQuery] = useState("")
 
   const handleLogout = async () => {
     try {
-      const logoutUser = await axios.post(
-        `${BASE_URL}/logout`,
-        {},
-        {
-          withCredentials: true,
-        },
-      )
-
+      await axios.post(`${BASE_URL}/logout`, {}, { withCredentials: true })
       dispatch(removeUser())
-
-      if (logoutUser.status === 200) {
-        navigate("/login")
-      }
-    } catch (error) {
-      console.log(error.message)
-      return
-    } finally {
-      setShowLogoutConfirm(false)
+      navigate("/login")
+    } catch (err) {
+      console.error("Logout failed")
     }
   }
 
-  const headerMenuItems = [
-    { label: "Feed", icon: <Globe className="w-4 h-4" />, path: "/app" },
-    { label: "Chat", icon: <MessageCircle className="w-4 h-4" />, path: "/app/chat" },
-    { label: "Connections", icon: <Users className="w-4 h-4" />, path: "/app/connections" },
-    {
-      label: "Requests",
-      icon: <Clock className="w-4 h-4" />,
-      path: "/app/requests",
-      badge: requestCount > 0 ? requestCount : null,
-    },
-    {
-      label: "Premium",
-      icon: <Crown className="w-4 h-4" />,
-      path: "/app/premium",
-      isPremium: true,
-    },
-  ]
-
-  if (!user) {
-    return null
+  const handleSearch = (e) => {
+    e.preventDefault()
+    // Implement search logic or navigate to search results
+    console.log("Searching for:", searchQuery)
   }
 
   return (
-    <>
-      <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center">
-              <Link
-                to="/app"
-                className="flex items-center space-x-3 text-gray-900 hover:text-blue-600 transition-colors duration-200"
-              >
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
-                  <Heart className="h-5 w-5 text-white" />
-                </div>
-                <div className="hidden sm:block">
-                  <span className="font-bold text-xl tracking-tight">DevMate</span>
-                  <p className="text-xs text-gray-500 -mt-1">Connect & Grow</p>
-                </div>
-              </Link>
+    <nav className="h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <div className="container h-full mx-auto px-4 flex items-center justify-between gap-4">
+        
+        <div className="flex items-center gap-2 md:gap-3">
+          <Button variant="ghost" size="icon" className="md:hidden -ml-2 text-muted-foreground hover:text-foreground" onClick={() => setIsMobileMenuOpen(true)}>
+            <Menu className="w-5 h-5" />
+          </Button>
+          {/* Brand */}
+          <Link to="/app" className="flex items-center gap-2 group flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center transition-transform group-hover:scale-105">
+              <Code2 className="w-5 h-5 text-primary-foreground" />
             </div>
-
-            <div className="hidden md:flex items-center space-x-6">
-
-              {/* Header Menu Items */}
-              <div className="flex items-center space-x-4">
-                {headerMenuItems.map((item) => (
-                  <div key={item.path} className="relative">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      asChild
-                      className={`text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors ${
-                        item.isPremium
-                          ? "bg-amber-400 text-white hover:bg-amber-500 hover:text-white shadow-lg"
-                          : ""
-                      }`}
-                    >
-                      <Link to={item.path} className="flex items-center space-x-2">
-                        {item.icon}
-                        <span className="font-medium">{item.label}</span>
-                      </Link>
-                    </Button>
-                    {item.badge && (
-                      <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs font-bold rounded-full">
-                        {item.badge > 99 ? "99+" : item.badge}
-                      </Badge>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-10 w-10 rounded-full ring-2 ring-transparent hover:ring-blue-100 transition-all duration-200"
-                  >
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user?.photoUrl || "/placeholder.svg"} alt={user?.firstName} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold">
-                        {user?.firstName?.charAt(0)?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64" align="end" forceMount>
-                  <div className="flex items-center justify-start gap-3 p-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={user?.photoUrl || "/placeholder.svg"} alt={user?.firstName} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold">
-                        {user?.firstName?.charAt(0)?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col space-y-1">
-                      <p className="font-semibold text-sm text-gray-900">
-                        {user?.firstName} {user?.lastName}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate max-w-[150px]">{user?.emailId}</p>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/app/profile"
-                      className="flex items-center space-x-3 cursor-pointer py-2.5 px-3 hover:bg-gray-50 transition-colors"
-                    >
-                      <User className="w-4 h-4" />
-                      <span className="font-medium">Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600 cursor-pointer py-2.5 px-3 hover:bg-red-50 transition-colors"
-                    onClick={handleLogoutClick}
-                  >
-                    <LogOut className="mr-3 h-4 w-4" />
-                    <span className="font-medium">Sign Out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Mobile menu */}
-            <div className="md:hidden ">
-              <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-80 bg-white">
-                  <SheetHeader>
-                    <SheetTitle className="text-left flex items-center space-x-3">
-                      <Link to={"/app"}>
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
-                          <Heart className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="hidden sm:block">
-                          <span className="font-bold text-xl tracking-tight">DevMate</span>
-                          <p className="text-xs text-gray-500 -mt-1">Connect & Grow</p>
-                        </div>
-                      </Link>
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-8 space-y-6">
-                    {/* User Info */}
-                    <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
-                      <Avatar className="h-14 w-14">
-                        <AvatarImage src={user?.photoUrl || "/placeholder.svg"} alt={user?.firstName} />
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold text-lg">
-                          {user?.firstName?.charAt(0)?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <p className="font-semibold text-gray-900">
-                          {user?.firstName} {user?.lastName}
-                        </p>
-                        <p className="text-sm text-gray-500 truncate max-w-[180px]">{user?.emailId}</p>
-                      </div>
-                    </div>
-
-                    {/* Navigation Items */}
-                    <div className="space-y-2 bg-white text-black">
-                      {headerMenuItems.map((item) => (
-                        <div key={item.path} className="relative">
-                          <Button
-                            variant="ghost"
-                            className={`w-full justify-start h-12 text-left transition-colors hover:bg-blue-50 ${
-                              item.isPremium
-                                ? "bg-amber-400 text-white hover:bg-amber-500 hover:text-white shadow-lg"
-                                : ""
-                            }`}
-                            asChild
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <Link to={item.path} className="flex items-center space-x-3">
-                              {item.icon}
-                              <span className="font-medium">{item.label}</span>
-                            </Link>
-                          </Button>
-                          {item.badge && (
-                            <Badge className="absolute top-2 right-4 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs font-bold rounded-full">
-                              {item.badge > 99 ? "99+" : item.badge}
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 text-left hover:bg-blue-50 transition-colors"
-                        asChild
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <Link to="/app/profile" className="flex items-center space-x-3">
-                          <User className="w-4 h-4" />
-                          <span className="font-medium">Profile</span>
-                        </Link>
-                      </Button>
-                    </div>
-
-                    {/* Logout Button */}
-                    <div className="pt-4 border-t">
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 text-red-600 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        onClick={() => {
-                          setIsMenuOpen(false)
-                          handleLogoutClick()
-                        }}
-                      >
-                        <LogOut className="mr-3 h-4 w-4" />
-                        <span className="font-medium">Sign Out</span>
-                      </Button>
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-          </div>
+            <span className="font-bold text-xl tracking-tight hidden sm:inline-block">
+              DevMate
+            </span>
+          </Link>
         </div>
-      </header>
 
-      {/* Logout Confirmation Dialog with Backdrop Blur */}
-      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
-        <AlertDialogContent className="sm:max-w-md backdrop-blur-sm bg-white text-black">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-semibold text-gray-900">Sign Out</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-600">
-              Are you sure you want to sign out? You'll need to sign in again to access your account.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="bg-gray-50 text-gray-900 hover:bg-gray-100">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-500 text-white"
-            >
-              Sign Out
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* Global Search */}
+        <div className="flex-1 max-w-xl hidden md:block">
+            <form onSubmit={handleSearch} className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input 
+                    type="text" 
+                    placeholder="Search developers, skills, or projects..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full h-10 bg-muted/30 border border-border/50 rounded-full pl-10 pr-4 text-sm focus:bg-background focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                        <span className="text-xs">⌘</span>K
+                    </kbd>
+                </div>
+            </form>
+        </div>
 
-      {/* Backdrop Blur Overlay for Logout Dialog */}
-      {showLogoutConfirm && <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" />}
-    </>
+        {/* Action Items */}
+        <div className="flex items-center gap-2">
+          
+          {/* Premium CTA */}
+          <Button asChild variant="ghost" className="hidden sm:flex items-center gap-2 rounded-full text-amber-500 hover:text-amber-600 hover:bg-amber-500/10">
+            <Link to="/app/premium">
+              <Sparkles className="w-4 h-4 fill-current" />
+              <span className="text-xs font-bold uppercase tracking-wider">Upgrade</span>
+            </Link>
+          </Button>
+
+          <div className="h-4 w-[1px] bg-border mx-1 hidden sm:block" />
+
+          {/* User Profile Dropdown */}
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 flex items-center gap-2 pl-1 pr-2 rounded-full border border-transparent hover:border-border hover:bg-muted/50 transition-all">
+                  <Avatar className="h-8 w-8 border border-border/50">
+                    <AvatarImage src={user.photoUrl} alt={user.firstName} className="object-cover" />
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                      {user.firstName[0]}{user.lastName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64 mt-2 p-2 rounded-2xl border-border/50 shadow-2xl" align="end">
+                <DropdownMenuLabel className="p-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 border border-border">
+                        <AvatarImage src={user.photoUrl} alt={user.firstName} className="object-cover" />
+                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                            {user.firstName[0]}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                        <p className="text-sm font-black leading-none">{user.firstName} {user.lastName}</p>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground mt-1 tracking-widest">{user.gender || 'Developer'}</p>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-border/50" />
+                <div className="p-1 space-y-1">
+                    <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
+                        <Link to="/app/profile" className="flex items-center gap-3 py-2">
+                            <User className="w-4 h-4 text-muted-foreground" /> 
+                            <span className="font-semibold">My Profile</span>
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
+                        <Link to="/app/premium" className="flex items-center gap-3 py-2 text-amber-500 focus:text-amber-500">
+                            <Crown className="w-4 h-4" /> 
+                            <span className="font-semibold">Go Premium</span>
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
+                        <Link to="/app/settings" className="flex items-center gap-3 py-2">
+                            <Settings className="w-4 h-4 text-muted-foreground" /> 
+                            <span className="font-semibold">Account Settings</span>
+                        </Link>
+                    </DropdownMenuItem>
+                </div>
+                <DropdownMenuSeparator className="bg-border/50" />
+                <div className="p-1">
+                    <DropdownMenuItem onClick={handleLogout} className="rounded-xl cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-3 py-2">
+                        <LogOut className="w-4 h-4" /> 
+                        <span className="font-semibold">Sign out</span>
+                    </DropdownMenuItem>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      </div>
+    </nav>
   )
 }
 

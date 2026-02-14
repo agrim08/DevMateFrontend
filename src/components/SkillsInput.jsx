@@ -3,14 +3,23 @@ import { Input } from "./ui/input"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { Label } from "./ui/label"
-import { Briefcase, X } from "lucide-react"
+import { Code2, X, Plus, Terminal } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 const SkillsInput = ({ skills, setSkills, label, id }) => {
   const [currentSkill, setCurrentSkill] = useState("")
 
   const addSkill = () => {
-    if (currentSkill.trim() && !skills.includes(currentSkill.trim())) {
-      setSkills([...skills, currentSkill.trim()])
+    if (!currentSkill.trim()) return
+
+    // Allow adding multiple skills separated by commas
+    const newSkills = currentSkill
+      .split(',')
+      .map(skill => skill.trim())
+      .filter(skill => skill !== "" && !skills.includes(skill))
+
+    if (newSkills.length > 0) {
+      setSkills([...skills, ...newSkills])
       setCurrentSkill("")
     }
   }
@@ -27,50 +36,72 @@ const SkillsInput = ({ skills, setSkills, label, id }) => {
   }
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id} className="text-sm font-semibold text-gray-700">
-        {label} <span className="text-red-500">*</span>
-        <span className="text-xs text-gray-500 ml-2">({skills.length} skills)</span>
-      </Label>
-      <div className="relative">
+    <div className="space-y-3">
+      <div className="flex justify-between items-center px-1">
+        <Label htmlFor={id} className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+            {label}
+        </Label>
+        <span className="text-[10px] font-bold text-muted-foreground/30 tabular-nums">
+            {skills.length} ADDED
+        </span>
+      </div>
+      
+      <div className="relative group">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+          <Terminal className="w-4 h-4 text-muted-foreground/40 group-focus-within:text-primary transition-all duration-300" />
+        </div>
         <Input
           id={id}
           name={id}
-          placeholder="Type a skill and press Enter"
+          placeholder="Type skill + Enter (comma separated works)..."
           value={currentSkill}
           onChange={(e) => setCurrentSkill(e.target.value)}
-          onKeyPress={handleSkillKeyPress}
-          className="h-11 pl-11 pr-20 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+          onKeyDown={handleSkillKeyPress}
+          className="h-12 pl-12 pr-14 rounded-2xl bg-muted/20 border-border/40 focus:bg-background focus:border-primary/30 focus:ring-4 focus:ring-primary/5 transition-all duration-300 font-medium placeholder:text-muted-foreground/20 text-sm"
         />
-        <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
         <Button
           type="button"
           onClick={addSkill}
           disabled={!currentSkill.trim()}
-          className="absolute right-1 top-1 h-9 px-3 text-xs"
+          size="icon"
+          className="absolute right-1.5 top-1.5 h-9 w-9 rounded-xl bg-primary shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
         >
-          Add
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
 
-      {skills.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-3 p-3 bg-gray-50 rounded-lg">
-          {skills.map((skill, index) => (
-            <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200 pr-1">
-              {skill}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 ml-1 hover:bg-blue-300 rounded-full"
-                onClick={() => removeSkill(skill)}
+      <AnimatePresence mode="popLayout">
+        {skills.length > 0 && (
+          <motion.div 
+            layout
+            className="flex flex-wrap gap-2 pt-2 px-1"
+          >
+            {skills.map((skill, index) => (
+              <motion.div
+                key={`${skill}-${index}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
               >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          ))}
-        </div>
-      )}
+                <Badge 
+                  className="bg-card hover:bg-muted border-border/50 hover:border-primary/30 text-foreground transition-all flex items-center gap-2 pl-4 pr-1.5 h-9 rounded-xl font-bold text-xs shadow-sm hover:shadow-md group"
+                >
+                  {skill}
+                  <button
+                    type="button"
+                    onClick={() => removeSkill(skill)}
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-destructive hover:text-white transition-all"
+                    aria-label={`Remove ${skill}`}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </Badge>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

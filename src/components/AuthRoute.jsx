@@ -2,7 +2,9 @@ import { useSelector } from "react-redux"
 import { Navigate, Outlet } from "react-router-dom"
 
 const AuthRoute = () => {
-  const user = useSelector((store) => store.user)
+  const { data: user, isLoading } = useSelector((store) => store.user)
+
+  if (isLoading) return null
 
   // Already logged in → dashboard
   if (user) {

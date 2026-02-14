@@ -4,13 +4,13 @@ import { BASE_URL } from "../utils/constants"
 import { useDispatch, useSelector } from "react-redux"
 import { addRequest, removeRequest } from "../utils/requestSlice"
 import { toast } from "sonner"
-import { UserPlus, Check, X, Briefcase, Calendar, MapPin } from "lucide-react"
-import { Card, CardContent, CardHeader } from "./ui/card"
+import { UserPlus, Check, X, MapPin, Inbox } from "lucide-react"
 import { Button } from "./ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Badge } from "./ui/badge"
 import FullScreenLoader from "./FullScreenLoader"
 import EmptyState from "./EmptyState"
+import { motion, AnimatePresence } from "framer-motion"
 
 const Requests = () => {
   const dispatch = useDispatch()
@@ -36,7 +36,9 @@ const Requests = () => {
     try {
       await axios.post(`${BASE_URL}/request/review/${status}/${_id}`, {}, { withCredentials: true })
       dispatch(removeRequest(_id))
-      toast.success(status === "accepted" ? "🎉 New connection added!" : "Request declined")
+      toast.success(status === "accepted" ? "🎉 Connection established!" : "Request dismissed", {
+        position: "bottom-right",
+      })
     } catch (error) {
       console.error(error.message)
       toast.error("Failed to process request")
@@ -44,121 +46,99 @@ const Requests = () => {
   }
 
   if (!requests) {
-    return <FullScreenLoader message="Loading connection requests..." />
+    return <FullScreenLoader message="Scanning incoming signals..." />
   }
 
   if (requests.length === 0) {
     return (
       <EmptyState
-        icon={UserPlus}
-        title="All Caught Up!"
-        description="You have no pending connection requests at the moment"
-        buttonText="Discover More Developers"
+        icon={Inbox}
+        title="Inbox Zero"
+        description="You've processed all incoming connection requests. Great job staying organized!"
+        buttonText="Find More Developers"
         buttonLink="/app"
       />
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background pt-12 pb-20 px-4">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Connection Requests</h1>
-          <p className="text-xl text-gray-600 mb-4">
-            {requests.length} Pending Request{requests.length !== 1 ? "s" : ""} to Review
-          </p>
-          <div className="w-24 h-1 bg-blue-600 mx-auto rounded-full" />
+        <div className="flex items-end justify-between mb-12 border-b border-border pb-8">
+            <div className="space-y-2">
+                <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
+                    <UserPlus className="w-4 h-4" />
+                    <span>Inbound Requests</span>
+                </div>
+                <h1 className="text-4xl font-black text-foreground tracking-tight">
+                    Review Queue
+                </h1>
+            </div>
+            <div className="hidden md:block text-right">
+                <span className="text-3xl font-black text-primary/20">{requests.length}</span>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Pending Review</p>
+            </div>
         </div>
 
-        {/* Requests Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {requests.map((request) => {
-            const { firstName, lastName, photoUrl, bio, skills, userAge, gender } = request?.fromUserId
-            const skillsArray = typeof skills === "string" ? skills.split(",").map((s) => s.trim()) : skills || []
+        {/* Requests List */}
+        <div className="space-y-4">
+          <AnimatePresence>
+            {requests.map((request, idx) => {
+                const { firstName, lastName, photoUrl, bio, skills, gender } = request?.fromUserId
+                const skillsArray = typeof skills === "string" ? skills.split(",").map((s) => s.trim()) : skills || []
 
-            return (
-              <Card
-                key={request?._id}
-                className="shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-white"
-              >
-                <CardHeader className="text-center pb-4">
-                  <Avatar className="w-24 h-24 mx-auto mb-4 ring-4 ring-blue-100">
-                    <AvatarImage src={photoUrl || "/placeholder.svg"} alt={`${firstName} ${lastName}`} />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xl font-bold">
-                      {firstName?.charAt(0)?.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{`${firstName || ""} ${lastName || ""}`}</h3>
-                  <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
-                    {userAge && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{userAge} years</span>
-                      </div>
-                    )}
-                    {gender && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span className="capitalize">{gender}</span>
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  {/* Bio */}
-                  {bio && (
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-sm font-medium text-gray-700 mb-1">About</p>
-                      <p className="text-gray-600 text-sm line-clamp-3">{bio}</p>
+                return (
+                <motion.div
+                    key={request?._id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="premium-card bg-card p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-6 group"
+                >
+                    <div className="flex items-center gap-4 flex-1">
+                        <Avatar className="w-16 h-16 border border-border shadow-sm">
+                            <AvatarImage src={photoUrl} className="object-cover" />
+                            <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
+                                {firstName[0]}{lastName[0]}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="space-y-1">
+                            <h3 className="text-lg font-bold text-foreground leading-none">{`${firstName} ${lastName}`}</h3>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                                <MapPin className="w-3 h-3" />
+                                <span className="capitalize">{gender || 'Developer'}</span>
+                            </div>
+                        </div>
                     </div>
-                  )}
 
-                  {/* Skills */}
-                  {skillsArray.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="flex items-center gap-1 mb-2">
-                        <Briefcase className="w-4 h-4 text-gray-600" />
-                        <p className="text-sm font-medium text-gray-700">Skills</p>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {skillsArray.slice(0, 4).map((skill, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs bg-blue-50 text-blue-700">
-                            {skill}
-                          </Badge>
-                        ))}
-                        {skillsArray.length > 4 && (
-                          <Badge variant="outline" className="text-xs text-gray-500">
-                            +{skillsArray.length - 4}
-                          </Badge>
-                        )}
-                      </div>
+                    <div className="flex-1 md:max-w-xs">
+                        <p className="text-sm text-muted-foreground font-medium line-clamp-2 italic">
+                            {bio || "Looking to connect for potential collaborations."}
+                        </p>
                     </div>
-                  )}
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      onClick={() => reviewRequest("rejected", request?._id)}
-                      variant="outline"
-                      className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Decline
-                    </Button>
-                    <Button
-                      onClick={() => reviewRequest("accepted", request?._id)}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <Check className="w-4 h-4 mr-2" />
-                      Accept
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={() => reviewRequest("rejected", request?._id)}
+                            variant="ghost"
+                            className="h-11 w-11 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all"
+                        >
+                            <X className="w-5 h-5" />
+                        </Button>
+                        <Button
+                            onClick={() => reviewRequest("accepted", request?._id)}
+                            className="h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold shadow-sm hover:shadow-md transition-all flex items-center gap-2"
+                        >
+                            <Check className="w-5 h-5" />
+                            <span className="hidden sm:inline">Accept</span>
+                        </Button>
+                    </div>
+                </motion.div>
+                )
+            })}
+          </AnimatePresence>
         </div>
       </div>
     </div>
