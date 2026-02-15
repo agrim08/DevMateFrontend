@@ -4,26 +4,26 @@
 
 @layer base {
   :root {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 240 5% 64.9%;
     --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --ring: 224.3 76.3% 48%;
-    --radius: 0.75rem;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --radius: 0.5rem;
   }
 }
 
@@ -33,9 +33,50 @@
   }
   body {
     @apply bg-background text-foreground selection:bg-primary/30 selection:text-primary antialiased;
+    font-family: "Inter", sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply tracking-tight;
+  }
+  h1 {
+    @apply text-4xl;
+    font-weight: 800;
+  }
+  h2 {
+    @apply text-3xl;
+    font-weight: 700;
+  }
+  h3 {
+    @apply text-2xl;
+    font-weight: 600;
+  }
+  h4 {
+    @apply text-xl;
+    font-weight: 600;
+  }
+  h5 {
+    @apply text-lg;
+    font-weight: 600;
+  }
+  h6 {
+    @apply text-base;
+    font-weight: 600;
+  }
+
+  /* Subheadings/Labels */
+  .subheading,
+  label {
+    font-weight: 600;
   }
 }
 
