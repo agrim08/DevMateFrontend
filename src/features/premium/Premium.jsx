@@ -63,8 +63,8 @@ const Premium = () => {
           email: notes?.emailId || "",
         },
         theme: { 
-          color: "#3b82f6", // DevMate Primary Blue
-          backdrop_color: "#020617" 
+          color: "#000000", 
+          backdrop_color: "#0B0B0B" 
         },
         modal: {
           ondismiss: () => setIsLoading(false)
@@ -140,8 +140,8 @@ const Premium = () => {
     <div className="min-h-screen bg-background pt-16 pb-24 px-4 overflow-hidden relative">
       {/* Dynamic Background Elements */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-600/5 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-600/5 blur-[120px] rounded-full animate-pulse delay-700" />
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-primary/5 blur-[120px] rounded-full animate-pulse delay-700" />
       </div>
       
       {/* Celebration Modal */}
@@ -190,7 +190,7 @@ const Premium = () => {
         <div className="text-center space-y-6 mb-16">
             <h1 className="text-4xl font-black text-foreground tracking-tight md:text-5xl leading-[1.1]">
                 Supercharge your <br />
-                <span className="text-primary italic">Network</span>.
+                <span className="text-primary uppercase">Network</span>.
             </h1>
             <p className="text-muted-foreground font-medium max-w-xl mx-auto text-lg leading-relaxed">
                 Unlock high-frequency networking, direct communication channels, and exclusive identity badges.

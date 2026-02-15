@@ -1,5 +1,5 @@
 import axiosInstance from "../../api/axiosInstance"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { removeUserFromFeed } from "../../store/slices/feedSlice"
 import { Heart, X, MapPin, Briefcase, Code, Terminal, ExternalLink, ShieldCheck, Zap } from "lucide-react"
 import toast from "react-hot-toast"
@@ -10,6 +10,8 @@ import { motion, AnimatePresence } from "framer-motion"
 
 const UserCard = ({ user, isPreview = false }) => {
   const dispatch = useDispatch()
+  const onlineUsers = useSelector((store) => store.chat.onlineUsers)
+  const isOnline = onlineUsers.includes(user?._id)
 
   if (!user) return null
   const { _id, firstName, lastName, photoUrl, userAge, gender, bio, skills, membershipType } = user
@@ -18,16 +20,16 @@ const UserCard = ({ user, isPreview = false }) => {
     if (membershipType === "emerald") {
       return (
         <div className="group/badge relative">
-          <ShieldCheck className="w-6 h-6 text-slate-400 fill-slate-400/10 drop-shadow-md" /> 
-          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-slate-800 text-xs text-slate-100 rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">Emerald Member</span>
+          <ShieldCheck className="w-6 h-6 text-primary/60 fill-primary/5 drop-shadow-md" /> 
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-foreground text-background text-[10px] font-bold rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">EMERALD Member</span>
         </div>
       )
     }
     if (membershipType === "diamond") {
       return (
         <div className="group/badge relative">
-          <ShieldCheck className="w-6 h-6 text-amber-400 fill-amber-400/10 drop-shadow-md animate-pulse" />
-          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-amber-900 text-xs text-amber-100 rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">Diamond Member</span>
+          <ShieldCheck className="w-6 h-6 text-primary fill-primary/10 drop-shadow-md animate-pulse" />
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-primary text-primary-foreground text-[10px] font-bold rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">DIAMOND Member</span>
         </div>
       )
     }
@@ -79,8 +81,10 @@ const UserCard = ({ user, isPreview = false }) => {
          
          {/* Status Indicator */}
          <div className="absolute top-4 right-4 flex items-center gap-2 px-2.5 py-1 rounded-full bg-background/80 backdrop-blur-sm border border-border/50">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            <span className="text-[10px] font-semibold text-muted-foreground">{isPreview ? 'Preview Mode' : 'Online'}</span>
+            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${isOnline ? "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)]" : "bg-muted-foreground/30"}`} />
+            <span className="text-[10px] font-semibold text-muted-foreground">
+                {isPreview ? 'Preview Mode' : isOnline ? 'Online' : 'Offline'}
+            </span>
          </div>
       </div>
 

@@ -111,18 +111,18 @@ const Requests = () => {
                                 <h3 className="text-lg font-semibold text-foreground leading-none">{`${firstName} ${lastName}`}</h3>
                                 {membershipType === "emerald" && (
                                     <div className="group/badge relative">
-                                        <div className="p-0.5 bg-slate-100 dark:bg-slate-900 rounded-full">
-                                            <ShieldCheck className="w-4 h-4 text-slate-400 fill-slate-400/10" />
+                                        <div className="p-0.5 rounded-full">
+                                            <ShieldCheck className="w-4 h-4 text-primary/60 fill-primary/5" />
                                         </div>
-                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-slate-800 text-[10px] text-slate-100 rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">Emerald</span>
+                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-foreground text-background text-[10px] font-bold rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap uppercase">Emerald</span>
                                     </div>
                                 )}
                                 {membershipType === "diamond" && (
                                     <div className="group/badge relative">
-                                        <div className="p-0.5 bg-amber-50 rounded-full dark:bg-amber-950/30">
-                                            <ShieldCheck className="w-4 h-4 text-amber-400 fill-amber-400/10 animate-pulse" />
+                                        <div className="p-0.5 rounded-full">
+                                            <ShieldCheck className="w-4 h-4 text-primary fill-primary/10 animate-pulse" />
                                         </div>
-                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-amber-900 text-[10px] text-amber-100 rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap">Diamond</span>
+                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-primary text-primary-foreground text-[10px] font-bold rounded opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap uppercase">Diamond</span>
                                     </div>
                                 )}
                             </div>

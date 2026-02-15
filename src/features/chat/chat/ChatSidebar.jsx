@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 
 const SidebarList = ({ filteredConnections, targetUserId, setSidebarOpen }) => {
   const navigate = useNavigate();
+  const onlineUsers = useSelector((store) => store.chat.onlineUsers);
+  const unreadCounts = useSelector((store) => store.chat.unreadCounts);
   
   return (
     <div className="space-y-2 py-2">
@@ -21,67 +24,74 @@ const SidebarList = ({ filteredConnections, targetUserId, setSidebarOpen }) => {
           <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">No Nodes Detected</p>
         </div>
       ) : (
-        filteredConnections.map((connection, idx) => (
-          <motion.div
-            key={connection._id}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: idx * 0.03 }}
-          >
-            <button
-              onClick={() => {
-                navigate(`/app/chat/${connection._id}`);
-                setSidebarOpen && setSidebarOpen(false);
-              }}
-              className={`w-full group relative flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 ${
-                connection._id === targetUserId 
-                  ? "bg-primary/10 border border-primary/20 shadow-sm shadow-primary/5" 
-                  : "hover:bg-muted/40 border border-transparent"
-              }`}
+        filteredConnections.map((connection, idx) => {
+          const isOnline = onlineUsers.includes(connection._id);
+          const unreadCount = unreadCounts[connection._id] || 0;
+          
+          return (
+            <motion.div
+              key={connection._id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.03 }}
             >
-              {connection._id === targetUserId && (
-                <motion.div 
-                  layoutId="active-indicator"
-                  className="absolute left-0 w-1 h-8 bg-primary rounded-r-full shadow-[0_0_8px_rgba(var(--primary),0.5)]"
-                />
-              )}
-              
-              <div className="relative">
-                <Avatar className={`h-12 w-12 border-2 transition-all duration-300 ${
-                  connection._id === targetUserId ? "border-primary/40 shadow-sm" : "border-border/40 group-hover:border-border/80"
-                }`}>
-                  <AvatarImage src={connection.photoUrl} alt={connection.firstName} className="object-cover" />
-                  <AvatarFallback className="bg-primary/5 text-primary text-xs font-black">
-                    {connection.firstName?.charAt(0)?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute -right-0.5 -bottom-0.5 w-3.5 h-3.5 bg-background rounded-full flex items-center justify-center border border-border/10">
-                  <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_5px_rgba(34,197,94,0.6)]"></div>
-                </div>
-              </div>
-
-              <div className="flex-1 text-left overflow-hidden">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className={`font-bold text-[0.9375rem] truncate tracking-tight transition-colors ${
-                    connection._id === targetUserId ? "text-primary" : "text-foreground group-hover:text-primary"
+              <button
+                onClick={() => {
+                  navigate(`/app/chat/${connection._id}`);
+                  setSidebarOpen && setSidebarOpen(false);
+                }}
+                className={`w-full group relative flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 ${
+                  connection._id === targetUserId 
+                    ? "bg-primary/10 border border-primary/20 shadow-sm shadow-primary/5" 
+                    : "hover:bg-muted/40 border border-transparent"
+                }`}
+              >
+                {connection._id === targetUserId && (
+                  <motion.div 
+                    layoutId="active-indicator"
+                    className="absolute left-0 w-1 h-8 bg-primary rounded-r-full shadow-[0_0_8px_rgba(var(--primary),0.5)]"
+                  />
+                )}
+                
+                <div className="relative">
+                  <Avatar className={`h-12 w-12 border-2 transition-all duration-300 ${
+                    connection._id === targetUserId ? "border-primary/40 shadow-sm" : "border-border/40 group-hover:border-border/80"
                   }`}>
-                    {connection.firstName} {connection.lastName}
-                  </span>
-                  <span className="text-[9px] font-black text-muted-foreground/30 tabular-nums uppercase bg-muted/30 px-1.5 py-0.5 rounded-md">
-                    Active
-                  </span>
+                    <AvatarImage src={connection.photoUrl} alt={connection.firstName} className="object-cover" />
+                    <AvatarFallback className="bg-primary/5 text-primary text-xs font-black">
+                      {connection.firstName?.charAt(0)?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -right-0.5 -bottom-0.5 w-3.5 h-3.5 bg-background rounded-full flex items-center justify-center border border-border/10">
+                    <div className={`w-2 h-2 rounded-full transition-all duration-300 ${isOnline ? "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)]" : "bg-muted-foreground/30"}`}></div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <p className={`text-[10px] uppercase font-bold tracking-widest truncate ${
-                        connection._id === targetUserId ? 'text-primary/70' : 'text-muted-foreground/50'
+
+                <div className="flex-1 text-left overflow-hidden">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className={`font-bold text-[0.9375rem] truncate tracking-tight transition-colors ${
+                      connection._id === targetUserId ? "text-primary" : "text-foreground group-hover:text-primary"
                     }`}>
-                        {connection.gender || 'Developer'}
-                    </p>
+                      {connection.firstName} {connection.lastName}
+                    </span>
+                    {unreadCount > 0 && (
+                      <Badge className="h-5 min-w-[20px] px-1.5 flex items-center justify-center bg-primary text-primary-foreground font-black text-[10px] rounded-full border-2 border-background">
+                        {unreadCount}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                      <p className={`text-[10px] uppercase font-bold tracking-widest truncate ${
+                          connection._id === targetUserId ? 'text-primary/70' : 'text-muted-foreground/50'
+                      }`}>
+                          {connection.gender || 'Developer'}
+                      </p>
+                  </div>
                 </div>
-              </div>
-            </button>
-          </motion.div>
-        ))
+              </button>
+            </motion.div>
+          );
+        })
       )}
     </div>
   );

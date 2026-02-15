@@ -4,9 +4,13 @@ import App from "./App.jsx";
 import { Provider } from "react-redux";
 import appStore from "./store";
 
+import { ThemeProvider } from "./components/common/ThemeProvider";
+
 createRoot(document.getElementById("root")).render(
     <Provider store={appStore}>
-        <App />
+        <ThemeProvider defaultTheme="dark" storageKey="devmate-theme">
+            <App />
+        </ThemeProvider>
     </Provider>
 );
 

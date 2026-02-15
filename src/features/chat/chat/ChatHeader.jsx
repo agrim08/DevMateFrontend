@@ -1,8 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSelector } from "react-redux";
 import { ChevronLeft, Menu, Phone, Video, MoreVertical, ShieldCheck, Github } from "lucide-react";
 
 const ChatHeader = ({ targetConnection, navigate, setSidebarOpen }) => {
+  const onlineUsers = useSelector((store) => store.chat.onlineUsers);
+  const isOnline = onlineUsers.includes(targetConnection._id);
+
   return (
     <div className="h-16 md:h-20 flex items-center justify-between px-4 md:px-6 border-b border-border/40 bg-background/60 backdrop-blur-xl flex-shrink-0 z-10 shadow-sm">
       <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
@@ -27,7 +31,7 @@ const ChatHeader = ({ targetConnection, navigate, setSidebarOpen }) => {
                         {targetConnection.firstName?.charAt(0)?.toUpperCase()}
                     </AvatarFallback>
                 </Avatar>
-                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-background shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+                <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-background shadow-lg transition-all duration-500 ${isOnline ? "bg-green-500 shadow-green-500/40" : "bg-muted-foreground/30 shadow-none"}`} />
             </div>
             <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-2">
@@ -38,9 +42,9 @@ const ChatHeader = ({ targetConnection, navigate, setSidebarOpen }) => {
                         <ShieldCheck className="w-3 h-3 text-primary" />
                     </div>
                 </div>
-                <p className="text-[9px] font-black text-green-500/80 uppercase tracking-[0.15em] mt-1.5 flex items-center gap-1.5">
-                    <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse"></span>
-                    Link Secure / Online
+                <p className={`text-[9px] font-black uppercase tracking-[0.15em] mt-1.5 flex items-center gap-1.5 transition-colors duration-500 ${isOnline ? "text-green-500/80" : "text-muted-foreground/40"}`}>
+                    <span className={`w-1 h-1 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-muted-foreground/30"}`}></span>
+                    {isOnline ? "Link Secure / Online" : "Link Interrupted / Offline"}
                 </p>
             </div>
         </div>

@@ -2,14 +2,28 @@ import { BASE_URL } from "@/utils/constants";
 import { io } from "socket.io-client";
 
 
-export const createSocketConnection = () => {
+let socket = null;
+
+export const getSocket = (userId) => {
+  if (socket) return socket;
+  
   const socketUrl = BASE_URL;
-  return io(socketUrl, {
+  socket = io(socketUrl, {
     path: "/socket.io", 
+    query: { userId },
     transports: ["websocket", "polling"],
     withCredentials: true, 
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 1000, 
   });
+  
+  return socket;
+};
+
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
 };

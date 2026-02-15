@@ -16,7 +16,8 @@ import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
 import EmptyChat from "./chat/EmptyChat";
-import { createSocketConnection } from "./socket";
+import { getSocket } from "./socket";
+import { setActiveChat, clearUnread } from "../../store/slices/chatSlice";
 
 const Chat = () => {
   const { targetUserId } = useParams();
@@ -122,35 +123,36 @@ const Chat = () => {
   useEffect(() => {
     if (!userId || !targetUserId) return;
     
-    const newSocket = createSocketConnection();
+    // Dispatch that we are now chatting with this user
+    dispatch(setActiveChat(targetUserId));
+    dispatch(clearUnread(targetUserId));
 
-    newSocket.on("connect", () => {
+    const sharedSocket = getSocket(userId);
+
+    const onConnect = () => {
       setConnectionStatus("connected");
       setError(null);
-      newSocket.emit("joinChat", { firstName: user.firstName, userId, targetUserId });
-    });
+      sharedSocket.emit("joinChat", { firstName: user.firstName, userId, targetUserId });
+    };
 
-    newSocket.on("connect_error", (err) => {
+    const onConnectError = (err) => {
       setConnectionStatus("disconnected");
       console.error("Socket connection error:", err?.message);
-    });
+    };
 
-    newSocket.on("reconnect", () => {
+    const onReconnect = () => {
       setConnectionStatus("connected");
       setError(null);
-      newSocket.emit("joinChat", { firstName: user.firstName, userId, targetUserId });
-    });
+      sharedSocket.emit("joinChat", { firstName: user.firstName, userId, targetUserId });
+    };
 
-    newSocket.on("messageReceived", (message) => {
+    const onMessageReceived = (message) => {
       // SECURITY: Only process messages relevant to this specific chat node
       const msgSenderId = typeof message.senderId === 'object' ? message.senderId._id : message.senderId;
       const isFromTarget = msgSenderId === targetUserId;
       const isFromMe = msgSenderId === userId;
       
-      if (!isFromTarget && !isFromMe) {
-          console.warn("Filtered out non-relevant message node");
-          return;
-      }
+      if (!isFromTarget && !isFromMe) return;
 
       const newMessageObj = {
         senderId: msgSenderId,
@@ -160,8 +162,6 @@ const Chat = () => {
       };
 
       setMessages((prev) => {
-        // Check for duplicates in recent messages (last 5)
-        // Relax time check to 5 seconds to account for slight server delays
         const isDuplicate = prev.slice(-5).some(
           (m) =>
             m.senderId === newMessageObj.senderId &&
@@ -171,19 +171,29 @@ const Chat = () => {
         if (isDuplicate) return prev;
         return [...prev, newMessageObj];
       });
-    });
+    };
 
-    setSocket(newSocket);
+    sharedSocket.on("connect", onConnect);
+    sharedSocket.on("connect_error", onConnectError);
+    sharedSocket.on("reconnect", onReconnect);
+    sharedSocket.on("messageReceived", onMessageReceived);
+
+    if (sharedSocket.connected) {
+      onConnect();
+    } else {
+      setConnectionStatus("connecting");
+    }
+
+    setSocket(sharedSocket);
 
     return () => {
-      newSocket.off("connect");
-      newSocket.off("connect_error");
-      newSocket.off("reconnect");
-      newSocket.off("error");
-      newSocket.off("messageReceived");
-      newSocket.disconnect();
+      sharedSocket.off("connect", onConnect);
+      sharedSocket.off("connect_error", onConnectError);
+      sharedSocket.off("reconnect", onReconnect);
+      sharedSocket.off("messageReceived", onMessageReceived);
+      dispatch(setActiveChat(null));
     };
-  }, [userId, targetUserId]);
+  }, [userId, targetUserId, dispatch, user.firstName]);
 
   // ===== Actions =====
   const sendMessage = async (e) => {

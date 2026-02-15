@@ -24,6 +24,7 @@ import {
 } from "../ui/dropdown-menu"
 import { Button } from "../ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
+import { ThemeToggle } from "./ThemeToggle"
 
 const Navbar = ({ setIsMobileMenuOpen }) => {
   const user = useSelector((store) => store.user.data)
@@ -87,9 +88,10 @@ const Navbar = ({ setIsMobileMenuOpen }) => {
 
         {/* Action Items */}
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           
           {/* Premium CTA */}
-          <Button asChild variant="ghost" className="hidden sm:flex items-center gap-2 rounded-xl text-amber-500 hover:text-amber-600 hover:bg-amber-500/10 transition-colors">
+          <Button asChild variant="ghost" className="hidden sm:flex items-center gap-2 rounded-xl text-primary hover:bg-primary/10 transition-colors">
             <Link to="/app/premium">
               <Crown className="w-4 h-4" />
               <span className="text-sm font-semibold">Go Premium</span>
@@ -136,7 +138,7 @@ const Navbar = ({ setIsMobileMenuOpen }) => {
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
-                        <Link to="/app/premium" className="flex items-center gap-3 py-2 text-amber-500 focus:text-amber-500">
+                        <Link to="/app/premium" className="flex items-center gap-3 py-2 text-primary focus:text-primary">
                             <Crown className="w-4 h-4" /> 
                             <span className="font-semibold">Go Premium</span>
                         </Link>

@@ -88,11 +88,18 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMobileMen
   const user = useSelector((store) => store.user.data)
   const location = useLocation()
   const requests = useSelector((store) => store.request)
+  const unreadCounts = useSelector((store) => store.chat.unreadCounts)
   const requestCount = requests?.length || 0
+  const unreadMessageCount = Object.values(unreadCounts).reduce((a, b) => a + b, 0)
 
   const navItems = [
     { label: "Feed", icon: <Globe className="w-5 h-5" />, path: "/app" },
-    { label: "Messages", icon: <MessageSquare className="w-5 h-5" />, path: "/app/chat" },
+    { 
+      label: "Messages", 
+      icon: <MessageSquare className="w-5 h-5" />, 
+      path: "/app/chat",
+      count: unreadMessageCount
+    },
     { label: "My Circle", icon: <Users className="w-5 h-5" />, path: "/app/connections" },
     { label: "Requests", icon: <Bell className="w-5 h-5" />, path: "/app/requests", count: requestCount },
   ]

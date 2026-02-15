@@ -147,7 +147,7 @@ const CompleteProfile = () => {
     <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 relative overflow-hidden">
       {/* Dynamic Background Elements */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[10%] right-[15%] w-[40%] h-[40%] bg-blue-600/5 rounded-full blur-[100px]" />
+        <div className="absolute top-[10%] right-[15%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[100px]" />
         <div className="absolute bottom-[20%] left-[10%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[100px]" />
         <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
       </div>
@@ -166,7 +166,7 @@ const CompleteProfile = () => {
             </div>
             <div className="space-y-1">
               <CardTitle className="text-4xl font-black tracking-tighter text-foreground uppercase">
-                Initialize <span className="text-primary italic">Profile</span>
+                Initialize <span className="text-primary">Profile</span>
               </CardTitle>
               <CardDescription className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-60">
                 Calibrate your digital identity for the DevMate ecosystem
