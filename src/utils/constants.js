@@ -1,2 +1,3 @@
 export const BASE_URL =
-  import.meta.env.VITE_API_URL || (location.hostname === "localhost" ? "http://localhost:4000" : "/api");
+  import.meta.env.VITE_API_URL || (location.hostname === "localhost" ? "http://localhost:4000/api" : "/api");
+
