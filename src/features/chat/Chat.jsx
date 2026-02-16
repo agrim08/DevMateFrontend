@@ -17,7 +17,7 @@ import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
 import EmptyChat from "./chat/EmptyChat";
 import { getSocket } from "./socket";
-import { setActiveChat, clearUnread } from "../../store/slices/chatSlice";
+import { setActiveChat, clearUnread, updateLastMessageAt } from "../../store/slices/chatSlice";
 
 const Chat = () => {
   const { targetUserId } = useParams();
@@ -82,7 +82,15 @@ const Chat = () => {
     if (connectionData) return;
     try {
       const res = await axiosInstance.get("/user/connections");
-      dispatch(addConnection(res?.data?.data));
+      const connections = res?.data?.data;
+      dispatch(addConnection(connections));
+      
+      // Initialize timestamps from backend
+      connections.forEach(conn => {
+        if (conn.lastMessageAt) {
+          dispatch(updateLastMessageAt({ userId: conn._id, timestamp: conn.lastMessageAt }));
+        }
+      });
     } catch (error) {
       console.error("Failed to load nodes:", error.message);
     }
@@ -109,6 +117,12 @@ const Chat = () => {
           createdAt: msg.createdAt,
         }));
         setMessages(chatMessages);
+        
+        // Update last message timestamp for this user if messages exist
+        if (chatMessages.length > 0) {
+          const lastMsg = chatMessages[chatMessages.length - 1];
+          dispatch(updateLastMessageAt({ userId: targetUserId, timestamp: lastMsg.createdAt }));
+        }
       }
       setError(null);
     } catch (err) {
@@ -169,6 +183,10 @@ const Chat = () => {
             Math.abs(new Date(m.createdAt) - new Date(newMessageObj.createdAt)) < 5000
         );
         if (isDuplicate) return prev;
+        
+        // Update timestamp for sorting
+        dispatch(updateLastMessageAt({ userId: msgSenderId, timestamp: newMessageObj.createdAt }));
+        
         return [...prev, newMessageObj];
       });
     };
@@ -208,6 +226,9 @@ const Chat = () => {
     };
 
     setMessages((prev) => [...prev, message]);
+    
+    // Update timestamp for me when I send
+    dispatch(updateLastMessageAt({ userId: targetUserId, timestamp: message.createdAt }));
 
     try {
       socket.emit("sendMessage", { firstName: user.firstName, userId, targetUserId, content: newMessage.trim() });

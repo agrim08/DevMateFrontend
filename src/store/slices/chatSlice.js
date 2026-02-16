@@ -6,14 +6,20 @@ const chatSlice = createSlice({
     unreadCounts: {}, // userId -> count
     onlineUsers: [], // list of userIds
     activeChat: null, // userId of the currently open chat
+    lastMessageTimestamps: {}, // userId -> timestamp
   },
   reducers: {
+    updateLastMessageAt: (state, action) => {
+      const { userId, timestamp } = action.payload;
+      state.lastMessageTimestamps[userId] = timestamp;
+    },
     incrementUnread: (state, action) => {
       const senderId = action.payload;
       // Don't increment if we are currently chatting with this user
       if (state.activeChat === senderId) return;
       
       state.unreadCounts[senderId] = (state.unreadCounts[senderId] || 0) + 1;
+      state.lastMessageTimestamps[senderId] = new Date().toISOString();
     },
     clearUnread: (state, action) => {
       const userId = action.payload;
@@ -46,7 +52,8 @@ export const {
   clearUnread, 
   setOnlineUsers, 
   updateUserStatus,
-  setActiveChat
+  setActiveChat,
+  updateLastMessageAt
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

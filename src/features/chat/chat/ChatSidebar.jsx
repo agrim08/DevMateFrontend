@@ -13,10 +13,17 @@ const SidebarList = ({ filteredConnections, targetUserId, setSidebarOpen }) => {
   const navigate = useNavigate();
   const onlineUsers = useSelector((store) => store.chat.onlineUsers);
   const unreadCounts = useSelector((store) => store.chat.unreadCounts);
+  const lastMessageTimestamps = useSelector((store) => store.chat.lastMessageTimestamps);
+  
+  const sortedConnections = [...filteredConnections].sort((a, b) => {
+    const timeA = lastMessageTimestamps[a._id] ? new Date(lastMessageTimestamps[a._id]).getTime() : 0;
+    const timeB = lastMessageTimestamps[b._id] ? new Date(lastMessageTimestamps[b._id]).getTime() : 0;
+    return timeB - timeA;
+  });
   
   return (
     <div className="space-y-2 py-2">
-      {filteredConnections?.length === 0 ? (
+      {sortedConnections?.length === 0 ? (
         <div className="text-center py-20 px-4 space-y-4">
           <div className="w-16 h-16 bg-muted/20 rounded-2xl flex items-center justify-center mx-auto border border-border/10">
               <MessageSquare className="h-8 w-8 text-muted-foreground/30" />
@@ -24,7 +31,7 @@ const SidebarList = ({ filteredConnections, targetUserId, setSidebarOpen }) => {
           <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">No Nodes Detected</p>
         </div>
       ) : (
-        filteredConnections.map((connection, idx) => {
+        sortedConnections.map((connection, idx) => {
           const isOnline = onlineUsers.includes(connection._id);
           const unreadCount = unreadCounts[connection._id] || 0;
           
