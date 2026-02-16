@@ -65,7 +65,12 @@ const UserCard = ({ user, isPreview = false }) => {
     }
   }
 
-  const skillsArray = typeof skills === "string" ? skills.split(",").map((s) => s.trim()) : skills || []
+  const [isExpanded, setIsExpanded] = useState(false)
+  const skillsArray = (Array.isArray(skills) ? skills : (skills ? [skills] : []))
+    .flatMap(s => typeof s === "string" ? s.split(",").map(i => i.trim()) : s)
+    .filter(Boolean)
+
+  const displayedSkills = isExpanded ? skillsArray : skillsArray.slice(0, 5)
 
   return (
     <motion.div
@@ -139,15 +144,26 @@ const UserCard = ({ user, isPreview = false }) => {
                 </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {skillsArray.slice(0, 5).map((skill, idx) => (
+              {displayedSkills.map((skill, idx) => (
                 <div key={idx} className="bg-secondary/50 px-2.5 py-1 rounded-md text-[11px] font-medium text-foreground border border-border/50 transition-colors cursor-default">
                    {skill}
                 </div>
               ))}
-              {skillsArray.length > 5 && (
-                <div className="bg-primary/10 px-2.5 py-1 rounded-md text-[11px] font-semibold text-primary border border-primary/20">
+              {!isExpanded && skillsArray.length > 5 && (
+                <button 
+                  onClick={() => setIsExpanded(true)}
+                  className="bg-primary/10 px-2.5 py-1 rounded-md text-[11px] font-bold text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
+                >
                    +{skillsArray.length - 5} more
-                </div>
+                </button>
+              )}
+              {isExpanded && skillsArray.length > 5 && (
+                <button 
+                  onClick={() => setIsExpanded(false)}
+                  className="bg-muted px-2.5 py-1 rounded-md text-[11px] font-bold text-muted-foreground border border-border/50 hover:bg-muted/80 transition-colors cursor-pointer"
+                >
+                   Show less
+                </button>
               )}
             </div>
           </div>

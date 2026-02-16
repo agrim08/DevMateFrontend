@@ -16,7 +16,7 @@ import { Sheet, SheetContent } from "../ui/sheet"
 
 const SidebarContent = ({ isCollapsed, navItems, isActive, isMobile }) => {
   return (
-    <div className="flex-1 py-6 px-3 space-y-8 flex flex-col h-full overflow-y-auto">
+    <div className="flex-1 py-6 px-3 space-y-8 flex flex-col h-full overflow-y-auto overflow-x-hidden scrollbar-none">
        {/* Navigation Section */}
         <div className="space-y-1">
           {navItems.map((item) => (
@@ -31,7 +31,7 @@ const SidebarContent = ({ isCollapsed, navItems, isActive, isMobile }) => {
             >
               <div className="flex-shrink-0">{item.icon}</div>
               {(!isCollapsed || isMobile) && (
-                <span className="font-semibold text-sm tracking-tight">{item.label}</span>
+                <span className="font-semibold text-sm tracking-tight whitespace-nowrap">{item.label}</span>
               )}
               
               {item.count > 0 && (
@@ -52,7 +52,7 @@ const SidebarContent = ({ isCollapsed, navItems, isActive, isMobile }) => {
 
         {/* Secondary Section */}
         <div className="pt-6 border-t border-border/50 space-y-1 mt-auto">
-             <p className={`px-4 mb-2 text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-wider transition-opacity ${isCollapsed && !isMobile ? 'opacity-0' : 'opacity-100'}`}>
+             <p className={`px-4 mb-2 text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-wider transition-all duration-300 ${isCollapsed && !isMobile ? 'opacity-0 invisible h-0' : 'opacity-100 visible'}`}>
                 Account
             </p>
             <Link
@@ -119,7 +119,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMobileMen
             <SidebarContent isCollapsed={isCollapsed} navItems={navItems} isActive={isActive} isMobile={false} />
             
              {/* Collapse Toggle */}
-             <div className="p-4 border-t border-border/50">
+             <div className="p-4 border-t border-border/50 overflow-x-hidden">
                 <Button
                 variant="ghost"
                 size="icon"

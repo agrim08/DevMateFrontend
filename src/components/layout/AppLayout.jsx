@@ -14,8 +14,15 @@ const AppLayout = () => {
   const location = useLocation()
   const dispatch = useDispatch()
   const { data: user } = useSelector((store) => store.user)
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem("sidebarCollapsed");
+    return saved === "true";
+  });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("sidebarCollapsed", isSidebarCollapsed);
+  }, [isSidebarCollapsed]);
 
   // ===== Global Data Fetching =====
   const fetchPendingRequests = async () => {
