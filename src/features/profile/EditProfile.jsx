@@ -24,6 +24,9 @@ import ProfileInputField from "./ProfileInputField"
 import ProfileTextAreaField from "./ProfileTextAreaField"
 import SkillsInput from "./SkillsInput"
 import UserCard from "../feed/UserCard"
+import GitHubStats from "./GitHubStats"
+import ContributionGraph from "./ContributionGraph"
+import { Github } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
@@ -51,6 +54,17 @@ const EditProfile = () => {
     if (!user?.skills) return []
     return user.skills.flatMap(s => s.split(',').map(i => i.trim())).filter(Boolean)
   })
+
+  useEffect(() => {
+    if (user?.skills) {
+      const parsedSkills = user.skills.flatMap(s => s.split(',').map(i => i.trim())).filter(Boolean);
+      // Only update if different to avoid infinite loops or typing interference
+      setSkills(prev => {
+        const isSame = prev.length === parsedSkills.length && prev.every((val, index) => val === parsedSkills[index]);
+        return isSame ? prev : parsedSkills;
+      });
+    }
+  }, [user?.skills]);
 
   const [isSaving, setIsSaving] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -315,6 +329,22 @@ const EditProfile = () => {
                 maxLength={200} 
               />
             </div>
+            </div>
+
+
+          {/* GitHub Integration */}
+          <div className="space-y-8 pb-12">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+                <Github className="w-4 h-4 text-primary" />
+              </div>
+              <h2 className="text-xl font-black uppercase tracking-tight text-foreground/80">Developer Integration</h2>
+            </div>
+            
+            <GitHubStats user={user} setUser={(u) => dispatch(addUser(u))} />
+            {user?.github?.contributionCalendar && (
+               <ContributionGraph data={user.github.contributionCalendar} />
+            )}
           </div>
         </div>
 
