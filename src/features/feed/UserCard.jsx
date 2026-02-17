@@ -142,20 +142,21 @@ const UserCard = ({ user, isPreview = false, limitReached = false }) => {
           </a>
         )}
 
-        {/* Avatar — anchored to bottom-left of banner, overlapping the body */}
-        <div className="absolute -bottom-9 left-6">
-          <div className="relative">
-            {isOnline && !isPreview && (
-              <div className="absolute inset-0 rounded-[1.6rem] border-2 border-green-500/30 animate-ping" />
-            )}
-            <div className="p-1 bg-card rounded-[1.8rem] shadow-xl border border-border/30 group-hover:scale-105 transition-transform duration-500">
-              <Avatar className="w-20 h-20 border border-border/20 bg-muted rounded-[1.5rem]">
-                <AvatarImage src={photoUrl} className="object-cover rounded-[1.5rem]" />
-                <AvatarFallback className="text-2xl font-black bg-primary/10 text-primary rounded-[1.5rem]">
-                  {firstName?.[0]}{lastName?.[0]}
-                </AvatarFallback>
-              </Avatar>
-            </div>
+      </div>
+
+      {/* ── Avatar — Moved out of banner to prevent clipping ───────────────── */}
+      <div className="absolute top-24 left-6 z-10">
+        <div className="relative">
+          {isOnline && !isPreview && (
+            <div className="absolute inset-0 rounded-[1.6rem] border-2 border-green-500/30 animate-ping" />
+          )}
+          <div className="p-1 bg-card rounded-[1.8rem] shadow-xl border border-border/30 group-hover:scale-105 transition-transform duration-500">
+            <Avatar className="w-20 h-20 border border-border/20 bg-muted rounded-[1.5rem]">
+              <AvatarImage src={photoUrl} className="object-cover rounded-[1.5rem]" />
+              <AvatarFallback className="text-2xl font-black bg-primary/10 text-primary rounded-[1.5rem]">
+                {firstName?.[0]}{lastName?.[0]}
+              </AvatarFallback>
+            </Avatar>
           </div>
         </div>
       </div>
