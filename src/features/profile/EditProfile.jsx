@@ -18,7 +18,8 @@ import {
   LayoutDashboard,
   BrainCircuit,
   Settings2,
-  Users
+  Users,
+  MapPin
 } from "lucide-react"
 import ProfileInputField from "./ProfileInputField"
 import ProfileTextAreaField from "./ProfileTextAreaField"
@@ -39,6 +40,8 @@ import {
   SelectValue,
 } from "../../components/ui/select"
 
+import { useLocation } from "../../hooks/useLocation";
+
 const EditProfile = () => {
   const dispatch = useDispatch()
   const { data: user } = useSelector((store) => store.user)
@@ -50,6 +53,14 @@ const EditProfile = () => {
   const [gender, setGender] = useState(user?.gender?.toLowerCase() || "")
   const [bio, setBio] = useState(user?.bio || "")
   
+  // Use custom hook for location logic
+  const {
+      countries, states, cities,
+      selectedCountry, selectedState, selectedCity,
+      handleCountryChange, handleStateChange, handleCityChange,
+      loadingCountries, loadingStates, loadingCities
+  } = useLocation(user?.country, user?.state, user?.city);
+
   const [skills, setSkills] = useState(() => {
     if (!user?.skills) return []
     return user.skills.flatMap(s => s.split(',').map(i => i.trim())).filter(Boolean)
@@ -123,12 +134,23 @@ const EditProfile = () => {
     try {
       const res = await axiosInstance.put(
         "/profile/edit",
-        { firstName, lastName, photoUrl, userAge: age, gender, bio, skills }
+        { 
+            firstName, 
+            lastName, 
+            photoUrl, 
+            userAge: age, 
+            gender, 
+            city: selectedCity, 
+            state: selectedState, 
+            country: selectedCountry, 
+            bio, 
+            skills 
+        }
       )
       dispatch(addUser(res.data.data))
       toast.success("Identity Synchronization Complete")
     } catch (err) {
-      toast.error(err?.response?.data || "Network error occurred")
+      toast.error(err?.response?.data?.message || err?.message || "Network error occurred")
     } finally {
       setIsSaving(false)
     }
@@ -141,6 +163,9 @@ const EditProfile = () => {
     photoUrl,
     userAge: age,
     gender,
+    city: selectedCity,
+    state: selectedState,
+    country: selectedCountry,
     bio,
     skills,
   }
@@ -305,8 +330,72 @@ const EditProfile = () => {
                   <div className="absolute inset-0 rounded-2xl border border-primary/0 group-focus-within/select:border-primary/20 pointer-events-none transition-colors duration-500" />
                 </div>
               </div>
+              
+              {/* Country Dropdown */}
+              <div className="space-y-2.5 mb-1">
+                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-1">Country</Label>
+                 <div className="relative group/select">
+                   <Select value={selectedCountry} onValueChange={handleCountryChange} disabled={loadingCountries}>
+                     <SelectTrigger className="h-12 pl-12 rounded-2xl bg-muted/20 border-border/40 focus:bg-background focus:border-primary/30 focus:ring-4 focus:ring-primary/5 transition-all duration-300 font-medium text-sm">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                            <MapPin className="w-4 h-4 text-muted-foreground/40 group-focus-within/select:text-primary transition-all duration-300" />
+                        </div>
+                        <SelectValue placeholder={loadingCountries ? "Loading..." : "Select Country"} />
+                     </SelectTrigger>
+                     <SelectContent className="bg-card border-border/50 rounded-2xl backdrop-blur-xl max-h-60 overflow-y-auto">
+                        {countries.map((country) => (
+                              <SelectItem key={country.id} value={country.name} className="rounded-xl">{country.name}</SelectItem>
+                        ))}
+                     </SelectContent>
+                   </Select>
+                   <div className="absolute inset-0 rounded-2xl border border-primary/0 group-focus-within/select:border-primary/20 pointer-events-none transition-colors duration-500" />
+                 </div>
+              </div>
+
+              {/* State Dropdown */}
+              <div className="space-y-2.5 mb-1">
+                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-1">State</Label>
+                 <div className="relative group/select">
+                   <Select value={selectedState} onValueChange={handleStateChange} disabled={!selectedCountry || loadingStates}>
+                     <SelectTrigger className="h-12 pl-12 rounded-2xl bg-muted/20 border-border/40 focus:bg-background focus:border-primary/30 focus:ring-4 focus:ring-primary/5 transition-all duration-300 font-medium text-sm">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                            <MapPin className="w-4 h-4 text-muted-foreground/40 group-focus-within/select:text-primary transition-all duration-300" />
+                        </div>
+                        <SelectValue placeholder={loadingStates ? "Loading..." : "Select State"} />
+                     </SelectTrigger>
+                     <SelectContent className="bg-card border-border/50 rounded-2xl backdrop-blur-xl max-h-60 overflow-y-auto">
+                        {states.map((state) => (
+                              <SelectItem key={state.id} value={state.name} className="rounded-xl">{state.name}</SelectItem>
+                        ))}
+                     </SelectContent>
+                   </Select>
+                   <div className="absolute inset-0 rounded-2xl border border-primary/0 group-focus-within/select:border-primary/20 pointer-events-none transition-colors duration-500" />
+                 </div>
+              </div>
+
+              {/* City Dropdown */}
+              <div className="space-y-2.5 mb-1">
+                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-1">City</Label>
+                 <div className="relative group/select">
+                   <Select value={selectedCity} onValueChange={handleCityChange} disabled={!selectedState || loadingCities}>
+                     <SelectTrigger className="h-12 pl-12 rounded-2xl bg-muted/20 border-border/40 focus:bg-background focus:border-primary/30 focus:ring-4 focus:ring-primary/5 transition-all duration-300 font-medium text-sm">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                            <MapPin className="w-4 h-4 text-muted-foreground/40 group-focus-within/select:text-primary transition-all duration-300" />
+                        </div>
+                        <SelectValue placeholder={loadingCities ? "Loading..." : "Select City"} />
+                     </SelectTrigger>
+                     <SelectContent className="bg-card border-border/50 rounded-2xl backdrop-blur-xl max-h-60 overflow-y-auto">
+                        {cities.map((city) => (
+                              <SelectItem key={city.id} value={city.name} className="rounded-xl">{city.name}</SelectItem>
+                        ))}
+                     </SelectContent>
+                   </Select>
+                   <div className="absolute inset-0 rounded-2xl border border-primary/0 group-focus-within/select:border-primary/20 pointer-events-none transition-colors duration-500" />
+                 </div>
+              </div>
             </div>
           </div>
+
 
           {/* Professional Context */}
           <div className="space-y-8 pb-12">
@@ -318,6 +407,7 @@ const EditProfile = () => {
             </div>
 
             <div className="space-y-10">
+
               <SkillsInput label="Core Tech Stack" id="skills" skills={skills} setSkills={setSkills} />
               <ProfileTextAreaField 
                 icon={FileText} 

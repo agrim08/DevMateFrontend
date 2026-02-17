@@ -64,7 +64,7 @@ const Login = () => {
       navigate("/app")
     } catch (error) {
       setIsLoading(false)
-      const msg = error.response?.data || "Authentication failed"
+      const msg = error.response?.data?.message || error.response?.data || "Authentication failed"
       setErrors(msg)
     }
   }
@@ -84,7 +84,8 @@ const Login = () => {
       setErrors("")
     } catch (error) {
       setIsLoading(false)
-      setErrors(error.response?.data || "Account creation failed")
+      const msg = error.response?.data?.message || error.response?.data || "Account creation failed"
+      setErrors(msg)
     }
   }
 

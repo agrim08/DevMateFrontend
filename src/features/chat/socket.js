@@ -1,4 +1,4 @@
-import { BASE_URL } from "@/utils/constants";
+import { SOCKET_URL } from "@/utils/constants";
 import { io } from "socket.io-client";
 
 
@@ -7,7 +7,7 @@ let socket = null;
 export const getSocket = (userId) => {
   if (socket) return socket;
   
-  const socketUrl = BASE_URL;
+  const socketUrl = SOCKET_URL;
   socket = io(socketUrl, {
     path: "/socket.io", 
     query: { userId },

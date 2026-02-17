@@ -17,7 +17,7 @@ import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
 import EmptyChat from "./chat/EmptyChat";
 import { getSocket } from "./socket";
-import { setActiveChat, clearUnread, updateLastMessageAt } from "../../store/slices/chatSlice";
+import { setActiveChat, clearUnread, updateLastMessageAt, setOnlineUsers, updateUserStatus } from "../../store/slices/chatSlice";
 
 const Chat = () => {
   const { targetUserId } = useParams();
@@ -133,20 +133,17 @@ const Chat = () => {
 
   useEffect(() => { fetchChat(); }, [targetUserId]);
 
-  // ===== Socket lifecycle =====
+  // ===== Socket: Global Connection & Online Status =====
   useEffect(() => {
-    if (!userId || !targetUserId) return;
-    
-    // Dispatch that we are now chatting with this user
-    dispatch(setActiveChat(targetUserId));
-    dispatch(clearUnread(targetUserId));
+    if (!userId) return;
 
     const sharedSocket = getSocket(userId);
 
     const onConnect = () => {
       setConnectionStatus("connected");
       setError(null);
-      sharedSocket.emit("joinChat", { firstName: user.firstName, userId, targetUserId });
+      // Always request online users upon connection
+      sharedSocket.emit("getOnlineUsers");
     };
 
     const onConnectError = (err) => {
@@ -154,64 +151,96 @@ const Chat = () => {
       console.error("Socket connection error:", err?.message);
     };
 
-    const onReconnect = () => {
-      setConnectionStatus("connected");
-      setError(null);
-      sharedSocket.emit("joinChat", { firstName: user.firstName, userId, targetUserId });
+    const onOnlineUsersList = (users) => {
+      dispatch(setOnlineUsers(users));
     };
 
-    const onMessageReceived = (message) => {
-      // SECURITY: Only process messages relevant to this specific chat node
-      const msgSenderId = typeof message.senderId === 'object' ? message.senderId._id : message.senderId;
-      const isFromTarget = msgSenderId === targetUserId;
-      const isFromMe = msgSenderId === userId;
-      
-      if (!isFromTarget && !isFromMe) return;
+    const onUserStatusUpdate = ({ userId, status }) => {
+      dispatch(updateUserStatus({ userId, status }));
+    };
 
-      const newMessageObj = {
-        senderId: msgSenderId,
-        firstName: message.firstName,
-        content: message.content,
-        createdAt: message.createdAt,
-      };
-
-      setMessages((prev) => {
-        const isDuplicate = prev.slice(-5).some(
-          (m) =>
-            m.senderId === newMessageObj.senderId &&
-            m.content === newMessageObj.content &&
-            Math.abs(new Date(m.createdAt) - new Date(newMessageObj.createdAt)) < 5000
-        );
-        if (isDuplicate) return prev;
-        
-        // Update timestamp for sorting
-        dispatch(updateLastMessageAt({ userId: msgSenderId, timestamp: newMessageObj.createdAt }));
-        
-        return [...prev, newMessageObj];
-      });
+    // Global Message Listener (for unread counts even if not in that chat)
+    const onGlobalMessage = (msg) => {
+      // If we are NOT in the active chat with this sender, update unread count
+      // This logic is also handled in the reducer via incrementUnread? 
+      // Actually, Chat.jsx is mounted. If activeChat matches sender, we don't increment.
+      // But we need to dispatch an action.
+      // Let's assume onMessageReceived handles specific chat updates.
+      // This global listener is for notifications/sidebar updates.
+      // However, chatSlice logic for incrementUnread checks activeChat state.
+      // Dispatching generic receive action might be good.
+      // For now, let's focus on online status.
     };
 
     sharedSocket.on("connect", onConnect);
     sharedSocket.on("connect_error", onConnectError);
-    sharedSocket.on("reconnect", onReconnect);
-    sharedSocket.on("messageReceived", onMessageReceived);
+    sharedSocket.on("onlineUsersList", onOnlineUsersList);
+    sharedSocket.on("userStatusUpdate", onUserStatusUpdate);
 
     if (sharedSocket.connected) {
       onConnect();
     } else {
-      setConnectionStatus("connecting");
+      sharedSocket.connect();
     }
-
     setSocket(sharedSocket);
 
     return () => {
       sharedSocket.off("connect", onConnect);
       sharedSocket.off("connect_error", onConnectError);
-      sharedSocket.off("reconnect", onReconnect);
-      sharedSocket.off("messageReceived", onMessageReceived);
-      dispatch(setActiveChat(null));
+      sharedSocket.off("onlineUsersList", onOnlineUsersList);
+      sharedSocket.off("userStatusUpdate", onUserStatusUpdate);
     };
-  }, [userId, targetUserId, dispatch, user.firstName]);
+  }, [userId, dispatch]);
+
+  // ===== Socket: Active Chat Logic =====
+  useEffect(() => {
+    if (!userId || !targetUserId || !socket) return;
+    
+    // Dispatch that we are now chatting with this user
+    dispatch(setActiveChat(targetUserId));
+    dispatch(clearUnread(targetUserId));
+
+    // Join the specific room
+    socket.emit("joinChat", { firstName: user.firstName, userId, targetUserId });
+
+    const onMessageReceived = (message) => {
+      const msgSenderId = typeof message.senderId === 'object' ? message.senderId._id : message.senderId;
+      const isFromTarget = msgSenderId === targetUserId;
+      const isFromMe = msgSenderId === userId;
+      
+      if (isFromTarget || isFromMe) {
+        const newMessageObj = {
+          senderId: msgSenderId,
+          firstName: message.firstName,
+          content: message.content,
+          createdAt: message.createdAt,
+        };
+
+        setMessages((prev) => {
+          const isDuplicate = prev.slice(-5).some(
+            (m) =>
+              m.senderId === newMessageObj.senderId &&
+              m.content === newMessageObj.content &&
+              Math.abs(new Date(m.createdAt) - new Date(newMessageObj.createdAt)) < 5000
+          );
+          if (isDuplicate) return prev;
+          
+          dispatch(updateLastMessageAt({ userId: msgSenderId, timestamp: newMessageObj.createdAt }));
+          return [...prev, newMessageObj];
+        });
+      }
+    };
+    
+    // We already attach this to the shared socket. 
+    // Since this effect depends on targetUserId, we add/remove this specific listener when chat changes.
+    socket.on("messageReceived", onMessageReceived);
+
+    return () => {
+      socket.off("messageReceived", onMessageReceived);
+      dispatch(setActiveChat(null));
+      // We do NOT disconnect the socket here, as it is shared.
+    };
+  }, [userId, targetUserId, socket, dispatch, user.firstName]);
 
   // ===== Actions =====
   const sendMessage = async (e) => {

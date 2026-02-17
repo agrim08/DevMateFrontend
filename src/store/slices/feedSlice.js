@@ -2,15 +2,24 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const feedSlice = createSlice({
   name: "feed",
-  initialState: null,
+  initialState: {
+    items: [],
+    limitReached: false,
+  },
   reducers: {
-    addFeed: (state, action) => action.payload,
+    addFeed: (state, action) => {
+      // Ensure we're setting an array for items
+      state.items = action.payload || []; 
+      state.limitReached = false; // Reset on new feed load
+    },
     removeUserFromFeed: (state, action) => {
-      const newFeed = state.filter((user) => user?._id !== action.payload);
-      return newFeed;
+      state.items = state.items.filter((user) => user?._id !== action.payload);
+    },
+    setLimitReached: (state, action) => {
+      state.limitReached = action.payload;
     },
   },
 });
 
-export const { addFeed, removeUserFromFeed } = feedSlice.actions;
+export const { addFeed, removeUserFromFeed, setLimitReached } = feedSlice.actions;
 export default feedSlice.reducer;

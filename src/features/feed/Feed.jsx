@@ -11,7 +11,9 @@ import { Button } from "../../components/ui/button"
 
 const Feed = () => {
   const dispatch = useDispatch()
-  const feed = useSelector((store) => store.feed)
+  const feedData = useSelector((store) => store.feed)
+  const feed = feedData?.items 
+  const limitReached = feedData?.limitReached
 
   const getFeed = async () => {
     try {
@@ -30,7 +32,7 @@ const Feed = () => {
     return <FullScreenLoader message="Scanning for top developers..." />
   }
 
-  if (feed.length === 0) {
+  if (feed.length === 0 && !limitReached) {
     return (
       <EmptyState
         icon={Search}
@@ -68,17 +70,41 @@ const Feed = () => {
       </div>
 
       {/* Main Discover Card */}
-      <div className="flex-1 flex items-center justify-center w-full p-4">
-        <div className="relative w-full max-w-md">
-           <UserCard user={feed[0]} />
-           
-           {/* Card count indicator - very subtle */}
-           <div className="mt-8 text-center">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
-                {feed.length} profiles available in queue
-              </span>
+      <div className="flex-1 flex flex-col items-center justify-center w-full p-4">
+        {limitReached && (
+           <div className="mb-6 px-6 py-3 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+              <Zap className="w-4 h-4 text-destructive animate-pulse" />
+              <span className="text-xs font-bold text-destructive uppercase tracking-widest">Daily Limit Reached</span>
            </div>
-        </div>
+        )}
+
+        {feed.length > 0 ? (
+          <div className="relative w-full max-w-md">
+             <UserCard user={feed[0]} limitReached={limitReached} />
+             
+             {/* Card count indicator - very subtle */}
+             <div className="mt-8 text-center">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
+                  {feed.length} profiles available in queue
+                </span>
+             </div>
+          </div>
+        ) : (
+          <EmptyState
+            icon={Zap}
+            title="Daily Limit Reached"
+            description="You've reached your daily interaction limit. Upgrade to Premium for unlimited connections or come back tomorrow."
+          >
+             <Button 
+                variant="outline" 
+                onClick={() => window.location.href='/premium'}
+                className="mt-4 gap-2 rounded-full px-6 border-primary/20 text-primary hover:bg-primary/5"
+             >
+                <Zap className="w-4 h-4" />
+                Upgrade Membership
+             </Button>
+          </EmptyState>
+        )}
       </div>
     </div>
   )
